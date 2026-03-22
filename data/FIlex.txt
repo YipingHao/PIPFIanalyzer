@@ -76,11 +76,11 @@ grammar: FIS: {
 	}
 	Lvalue: 
 	{
-		all: TOKEN;
+		only: TOKEN;
 	};
 	Rvalue:
 	{
-		all: ITEMS;
+		only: ITEMS;
 	}
 	ITEMS:
 	{
