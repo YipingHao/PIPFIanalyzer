@@ -9,7 +9,7 @@ lexical:{
 	identifier: identifier(+1): ([a-z]|[A-Z]|_)<idC>+;
 	const:
 	{
-		integer: '+'<num>+;
+		integer: ('+' | '-')? <num>+;
 		CommonChar: '\''(
 			'\\'(     (<octa><octa>?<octa>?) | (x|X)<hexa><hexa>?
 				|     (v|t|r|n|f|b|a|'\\'|'?'|'\''|'\"'|['\0'])   
@@ -17,13 +17,6 @@ lexical:{
 			|([' '-'!']|['#'-'&']|['('-'/']|['0'-'[']|[']'-'~'])
 			)'\'';
 		idChar: <idC>; 
-	};
-	reserved(+5):
-	{
-		lexical;
-		grammar;
-		void;
-		all;					
 	};
 	format:
 	{
@@ -57,107 +50,50 @@ lexical:{
 		anntationS: '/''/'(['\0'-'\11']|['\13'-'\177'])*'\n';
 		anntationM: '/''*'('/'|<AC>|'*'+<AC>)*'*'+'/';
 	}
-	RegSymbol:
+	operation:
 	{
-		range: '-';
-		star: '*';        //zero or more
-		plus: '+';        //one or more
-		question: '?';    //zero or one, not wildcard
-		or: '|';
+		multi: '*';       
+		add: '+';       
 	}		
+	assign: assign: '=';
 };
 
 //after lexical analysis 'anntation' and 'format' unit will be discarded 
 
-grammar: TEXT: {
-	TEXT: {
-		OnlyL: lexical BEGIN LEXICAL END;
-		LG: lexical BEGIN LEXICAL END grammar colon identifier BEGIN GRAMMAR END;};
-//LEXICAL part:
-	LEXICAL: {
-		single: RegGROUP; 
-		multi: LEXICAL RegGROUP;};
-	RegGROUP: {
-		single: RegGROUPNAME colon RegDEF;
-		multi: RegGROUPNAME BEGIN REGDEFS END;};
-	REGDEFS:{
-		single: RegDEF;
-		multi: REGDEFS RegDEF;}
-	RegDEF: {
-		default: RegNAME semicolon;
-		full: RegNAME colon REGBODY semicolon;}
-	RegGROUPNAME: {
-		blocks: void;
-		bare: identifier;
-		priority: identifier left integer right;}
-	RegNAME:{
-		bare: RegNAMEHead;
-		priority: RegNAMEHead left integer right;};
-	RegNAMEHead:
+grammar: FIS: {
+	FIS: {
+		single: FI;
+		multiple: FIS FI;
+		};
+	FI:
 	{
-		avoid: void;
-		alexical: lexical;
-		agrammar: grammar;
-		aall: all;
-		aid: identifier;
+		formula: Lvalue assign Rvalue;
 	}
-	REGBODY: REGEXPRESSor;
-	REGEXPRESSor:{
-		single: REGEXPRESS;
-		ororor: REGEXPRESSor or REGEXPRESS;};
-	REGEXPRESS:{
-		single: RegCOMPLEX;
-		multi: REGEXPRESS RegCOMPLEX;};
-	RegCOMPLEX:{
-		single: RegNODE;
-		multi1: RegCOMPLEX plus;
-		multi2: RegCOMPLEX star;
-		multi3: RegCOMPLEX question;};
-	RegNODE:{
-		single: RegLEAF;
-		braket: left REGEXPRESSor right;
-		replace: angleL identifier angleR;};
-	RegLEAF:{
-		single: RegCHAR;
-		single2: squareL RegCHAR squareR;
-		range: squareL RegCHAR range RegCHAR squareR;};
-	RegCHAR:{
-		commom: CommonChar;
-		id: idChar;
-	};
-//GRAMMAR
-	GRAMMAR:{
-		single: GrammerDEF;
-		multi: GRAMMAR GrammerDEF;
-	}	
-	GrammerDEF:{
-		single: identifier colon GFORMULA semicolon;
-		//single2: identifier colon identifier colon GFORMULA semicolon;
-		multi: identifier BEGIN GnameFORMULAS END;	
-	}
-	GnameFORMULAS:{
-		single: identifier colon GFORMULA semicolon;
-		multi: GnameFORMULAS identifier colon GFORMULA semicolon;
-	}
-	GFORMULA:{
-		unit: GFORMULAUnit;
-		more: GFORMULA GFORMULAUnit;
-	};
-	GFORMULAUnit:
+	TOKEN:
 	{
-		avoid: void;
-		alexical: lexical;
-		agrammar: grammar;
-		aid: identifier;
-		aall: all;
+		braket: identifier squareL integer squareR;
+		brace: identifier left integer right;
+	}
+	Lvalue: 
+	{
+		all: TOKEN;
 	};
+	Rvalue:
+	{
+		all: ITEMS;
+	}
+	ITEMS:
+	{
+		single: ITEM;
+		multiple: ITEMS add ITEM;
+	}
+	ITEM:
+	{
+		single: TOKEN;
+		multiple: ITEM multi TOKEN;
+	}
 
 
-	END:{
-		full: braceR semicolon;
-		half: braceR;
-	}
-	BEGIN: colon braceL; 
 
 };
 
