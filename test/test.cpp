@@ -6,3 +6,5 @@ int main()
     dict.build("./input/dictionary.txt");
     return 0;
 }
+
+
