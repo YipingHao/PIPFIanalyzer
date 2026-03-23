@@ -2,7 +2,7 @@
 
 int main()
 {
-    dictionary dict;
+    hyperlex::dictionary dict;
     dict.build("./input/dictionary.txt");
     return 0;
 }

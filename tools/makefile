@@ -6,12 +6,12 @@ CODE = $(BASE)code/
 TOOLS = $(BASE)tools/
 TEST = $(BASE)test/
 
-COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o
-TestOFile = $(TEST)main.o
+COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o
+TestOFile = $(TEST)test.o
 
 OPTION ?= -O2
 #OPTION = -O3
-EXTRA =-Wall -Wextra -fno-strict-aliasing -fwrapv -fno-aggressive-loop-optimizations -Wconversion -ftrapv
+#EXTRA # =-Wall -Wextra -fno-strict-aliasing -fwrapv -fno-aggressive-loop-optimizations -Wconversion -ftrapv
 #CC = icc
 CC = g++
 CFLAGS = $(OPTION) $(EXTRA)
@@ -33,6 +33,9 @@ $(ODIR)sheet.o:$(CODE)sheet.cpp $(CODE)sheet.h
 
 $(ODIR)analyzer.o:$(CODE)analyzer.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 	$(CC) -o $(ODIR)analyzer.o -c $(CFLAGS) $(CODE)analyzer.cpp 
+
+$(ODIR)analyzerthread.o:$(CODE)analyzerthread.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
+	$(CC) -o $(ODIR)analyzerthread.o -c $(CFLAGS) $(CODE)analyzerthread.cpp 
 
 $(ODIR)automata.o:$(CODE)automata.cpp $(CODE)automata.h
 	$(CC) -o $(ODIR)automata.o -c $(CFLAGS) $(CODE)automata.cpp 
