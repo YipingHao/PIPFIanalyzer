@@ -55,8 +55,15 @@ namespace analyzer
                     result += term;  // 累加单项式到结果
                 }
                 return result;
-            }   
+            }
             //不做任何检查，直接计算
+            int AppendMonomial(const vector<size_t>& monomial);   
+            /*
+            追加单项式到多项式
+            - 输入: monomial 单项式的向量，如果目前items数组为空，则设置order为monomial的长度
+            - 如果目前items数组为不空，且monomial的长度与order不相同，则返回-1
+            - 输出: 错误码: 0 成功，-1 失败（如指数向量长度错误）
+            */
     };
     class FIexpresses
     {

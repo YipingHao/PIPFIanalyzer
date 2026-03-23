@@ -247,7 +247,7 @@ namespace TemplateSelf
 		// 在 class vector<T> public: 内合适位置追加
 		inline size_t size() const { return count(); }
 		inline void resize(size_t n) { recount(n); }
-
+		inline bool empty() const { return Count == 0; }
 		inline size_t count() const { return Count; }
 		inline size_t capacity() const { return Capacity; }
 

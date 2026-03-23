@@ -27,8 +27,26 @@ double FIexpress::compute_bare(const vector<double>& values) const
     return result;
 }
 
-
-
+int FIexpress::AppendMonomial(const vector<size_t>& monomial)
+{
+    // 如果items数组为空，则设置order为monomial的长度
+    if (items.empty())
+    {
+        order = monomial.size();
+    }
+    // 如果items数组不为空，且monomial的长度与order不相同，则返回-1
+    else if (monomial.size() != static_cast<size_t>(order) || monomial.empty())
+    {
+        return -1;
+    }
+    
+    // 将单项式的指数信息追加到items数组
+    items.appendMove(monomial);
+    // 增加ItemCount
+    ItemCount++;
+    
+    return 0;
+}
 
 void FIexpresses::move(FIexpresses& src)
 {
