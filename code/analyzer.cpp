@@ -51,8 +51,28 @@ int FIexpress::AppendMonomial(const vector<size_t>& monomial)
 void FIexpresses::move(FIexpresses& src)
 {
     items.move(src.items);
+    XCount = src.XCount;
+    highestOrder = src.highestOrder;
+    OrderCount.move(src.OrderCount);
 }
-
+size_t FIexpress::getXCount() const
+{
+    if (items.count() == 0)
+    {
+        return 0;
+    }
+    
+    size_t maxIndex = 0;
+    for (size_t i = 0; i < items.count(); i++)
+    {
+        if (items[i] > maxIndex)
+        {
+            maxIndex = items[i];
+        }
+    }
+    
+    return maxIndex;
+}
 int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const
 {
     // 检查输入输出的行数是否匹配

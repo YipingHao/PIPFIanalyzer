@@ -8,17 +8,26 @@ namespace analyzer
     {
         public:
             typedef void _hx_need_explicit_move_tag;
-            FIexpress() = default;
-            ~FIexpress() = default;
-            FIexpress(const FIexpress&) = default;
-            FIexpress& operator=(const FIexpress&) = default;
+            FIexpress() : order(0), ItemCount(0) {}
+            ~FIexpress() {}
+            FIexpress(const FIexpress& other) : order(other.order), ItemCount(other.ItemCount), items(other.items) {}
+            FIexpress& operator=(const FIexpress& other)
+            {
+                if (this != &other)
+                {
+                    order = other.order;
+                    ItemCount = other.ItemCount;
+                    items = other.items;
+                }
+                return *this;
+            }
             void move(FIexpress& src);
         protected:
             int order;//齐次多项式的次数
             size_t ItemCount;//单项式项数
             vector<size_t> items;//大小为ItemCount * order
             /*
-            多项式的存储格式:
+            齐次多项式的存储格式:
             1. 放弃存储常数项，所有项的系数都设为1.0
                - FI(基本不变量)是多元多项式
             2. items数组存储单项式的指数信息
@@ -37,7 +46,9 @@ namespace analyzer
             void setOrder(int order) { this->order = order; }
             void setItemCount(size_t itemCount) { this->ItemCount = itemCount; }
             void setItems(const vector<size_t>& items) { this->items = items; }
-
+            size_t getXCount() const;
+            //返回齐次自变元下标索引中最大的一个，即items存储的最大的变量索引
+            
             double compute_bare(const vector<double>& values) const;
             inline double compute_bare(const double* values) const
             {
@@ -69,16 +80,25 @@ namespace analyzer
     {
         public:
         typedef void _hx_need_explicit_move_tag;
-            FIexpresses() = default;
-            ~FIexpresses() = default;
-            FIexpresses(const FIexpresses&) = default;
-            FIexpresses& operator=(const FIexpresses&) = default;
+            FIexpresses() : highestOrder(0), XCount(0) {}
+            ~FIexpresses() {}
+            FIexpresses(const FIexpresses& other) : items(other.items), highestOrder(other.highestOrder), OrderCount(other.OrderCount), XCount(other.XCount) {}
+            FIexpresses& operator=(const FIexpresses& other)
+            {
+                if (this != &other)
+                {
+                    items = other.items;
+                    highestOrder = other.highestOrder;
+                    OrderCount = other.OrderCount;
+                    XCount = other.XCount;
+                }
+                return *this;
+            }
             void move(FIexpresses& src);
         protected:
             vector<FIexpress> items;
             int highestOrder;//最高次数
             vector<size_t> OrderCount;//次数i的多项式数量
-            vector<size_t> OrderIndex;//次数i的多项式索引
             size_t XCount;//变量数量
 
         public:
@@ -86,7 +106,7 @@ namespace analyzer
             void setItems(const vector<FIexpress>& items) { this->items = items; }
             int getHighestOrder() const { return highestOrder; }
             const vector<size_t>& getOrderCount() const { return OrderCount; }
-            const vector<size_t>& getOrderIndex() const { return OrderIndex; }
+
             size_t getXCount() const { return XCount; }
 
         public:
