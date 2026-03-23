@@ -169,5 +169,6 @@ namespace analyzer
         size_t line;
         const char* msg;
         const char* symbol;
+        void demo(FILE*fp = stderr) const;
     };
 }
