@@ -1,4 +1,5 @@
 #include "template.h"
+#include <stdio.h>
 //C++03 语法
 namespace analyzer
 {
