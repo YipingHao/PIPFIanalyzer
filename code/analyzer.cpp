@@ -1,5 +1,5 @@
 #include "analyzer.h"
-#include "sheet.h"
+
 
 using namespace analyzer;
 
@@ -71,8 +71,8 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
     return 0;
 }
 
-int FIexpresses::build(FILE*fp)
+void errorinfo::demo(FILE*fp) const
 {
-    
-    return 0;
+    fprintf(fp, "line %d, %s, expect %s\n", line, msg, symbol);
+    fflush(fp);
 }

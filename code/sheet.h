@@ -99,3 +99,4 @@ namespace sheet
 	static const int Implicit[12];
 };
 }
+

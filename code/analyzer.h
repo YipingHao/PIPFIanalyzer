@@ -163,4 +163,11 @@ namespace analyzer
             最后将结果写入output数组的对应位置。
             */
     };
+
+    struct errorinfo
+    {
+        size_t line;
+        const char* msg;
+        const char* symbol;
+    };
 }
