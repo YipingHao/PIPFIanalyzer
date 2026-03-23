@@ -3,6 +3,32 @@
 
 using namespace analyzer;
 
+/*
+ * 生成C语言代码，用于计算PIP多项式的值
+ * 
+ * 生成的代码布局效果：
+ * void compute(const double* input, double* output)
+ * {
+ *     // 计算第0个多项式
+ *     double temp = 0;
+ *         temp += input[0] * input[1];
+ *         temp += input[2] * input[3];
+ *     output[0] = temp;
+ *     
+ *     // 计算第1个多项式
+ *     double temp = 0;
+ *         temp += input[0] * input[2];
+ *     output[1] = temp;
+ *     
+ *     ...
+ * }
+ * 
+ * 特点：
+ * - 每个多项式使用独立的临时变量temp累加所有单项式
+ * - 每个单项式单独一行，避免单行过长
+ * - 使用C风格的数组索引（从0开始）
+ * - 使用双精度浮点数进行计算
+ */
 int FIexpresses::printCcode(FILE* fp) const {
     // 检查文件指针是否有效
     if (fp == NULL) {
@@ -49,6 +75,41 @@ int FIexpresses::printCcode(FILE* fp) const {
     return 0;
 }
 
+/*
+ * 生成Fortran语言代码，用于计算PIP多项式的值
+ * 
+ * 生成的代码布局效果：
+ * subroutine compute(input, output)
+ *     implicit none
+ *     real*8, intent(in) :: input(:)
+ *     real*8, intent(out) :: output(:)
+ *     real*8 :: temp
+ *     integer :: i
+ *     
+ *     ! 计算第0个多项式
+ *     temp = 0.0d0
+ *     temp = temp + input(1) * input(2)
+ *     temp = temp + input(3) * input(4)
+ *     output(1) = temp
+ *     
+ *     ! 计算第1个多项式
+ *     temp = 0.0d0
+ *     temp = temp + input(1) * input(3)
+ *     output(2) = temp
+ *     
+ *     ...
+ * end subroutine compute
+ * 
+ * 特点：
+ * - 使用Fortran的subroutine声明函数
+ * - 使用implicit none避免隐式类型声明
+ * - 使用intent(in)和intent(out)明确参数方向
+ * - 每个多项式使用独立的临时变量temp累加所有单项式
+ * - 每个单项式单独一行，避免单行过长
+ * - 使用Fortran风格的数组索引（从1开始）
+ * - 使用real*8表示双精度浮点数
+ * - 使用0.0d0表示双精度零
+ */
 int FIexpresses::printFortrancode(FILE* fp) const {
     // 检查文件指针是否有效
     if (fp == NULL) {

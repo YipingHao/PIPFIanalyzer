@@ -113,6 +113,14 @@ namespace analyzer
             - 处理的成功状态或错误码（如果有）
             */
             int build(FILE*fp);
+            /*
+            从文件中读取FIexpress对象的表达式，构建FIexpresses对象。
+            参数说明：
+            - fp: 输入文件指针，用于读取表达式
+            - 处理的成功状态或错误码（如果有）
+            文件的文法记录在data/FIlex.txt中，文法分析使用LR解析，解析动作表格和词法分析器表格在
+            code/sheet.cpp中
+            */
             int printCcode(FILE*fp) const;
             /*
             将这个FIexpresses对象转换为C语言代码，用于计算PIP多项式的值。
@@ -125,5 +133,33 @@ namespace analyzer
             逐一计算每个多项式的值并写入output数组
             */
             int printFortrancode(FILE*fp) const;
+            /*
+            将这个FIexpresses对象转换为Fortran语言代码，用于计算PIP多项式的值。
+            参数说明：
+            - fp: 输出文件指针，用于存储生成的Fortran语言代码
+            生成的代码布局：
+                subroutine compute(input, output)
+                    implicit none
+                    real*8, intent(in) :: input(:)
+                    real*8, intent(out) :: output(:)
+                    real*8 :: temp
+                    integer :: i
+                    
+                    ! 计算第0个多项式
+                    temp = 0.0d0
+                    temp = temp + input(1) * input(2)
+                    temp = temp + input(3) * input(4)
+                    output(1) = temp
+                    
+                    ! 计算第1个多项式
+                    temp = 0.0d0
+                    temp = temp + input(1) * input(3)
+                    output(2) = temp
+                    
+                    ...
+                end subroutine compute
+            每个多项式占一个独立的计算块，使用临时变量temp累加所有单项式的值，
+            最后将结果写入output数组的对应位置。
+            */
     };
 }

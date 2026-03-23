@@ -70,3 +70,9 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
     
     return 0;
 }
+
+int FIexpresses::build(FILE*fp)
+{
+    
+    return 0;
+}
