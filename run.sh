@@ -8,7 +8,7 @@ program="./test/test.exe"
 # 默认值
 debug_mode=false
 gdb_args=()
-input_file="parameter/para.txt"
+input_file="parameter/input.txt"
 output_file="output/"
 
 # 显示用法帮助

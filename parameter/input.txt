@@ -1,0 +1,22 @@
+//=======================================================================================================
+/********************************************Notice*****************************************************/
+//Format of the parameter file:
+//         Keys should be in front of corresponding values within the same line, and  symbol ""  is crucial for a string.
+//         Keys are crucial too, don't change the former keys of the input values.
+//=======================================================================================================
+{
+	PIPFileName = "./data/vain.txt";
+    DataFileName = "./data/origin.txt";
+	OutputFileName = "L.txt";//Prefix is only needed
+
+    threadCount = 32;
+
+	//item = "test";
+    item = "dataswitch";
+    CcodePrint = true; 
+    FortranCodePrint = true;
+	TestItem = 
+	{
+		item = 3;
+	};
+}
