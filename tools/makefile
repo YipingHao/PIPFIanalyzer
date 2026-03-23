@@ -6,8 +6,9 @@ CODE = $(BASE)code/
 TOOLS = $(BASE)tools/
 TEST = $(BASE)test/
 
-COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o
+COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o $(ODIR)printer.o
 TestOFile = $(TEST)test.o
+HFILES = $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 
 OPTION ?= -O2
 #OPTION = -O3
@@ -36,6 +37,10 @@ $(ODIR)analyzer.o:$(CODE)analyzer.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)au
 
 $(ODIR)analyzerthread.o:$(CODE)analyzerthread.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 	$(CC) -o $(ODIR)analyzerthread.o -c $(CFLAGS) $(CODE)analyzerthread.cpp 
+
+$(ODIR)printer.o:$(CODE)printer.cpp $(HFILES)
+	$(CC) -o $(ODIR)printer.o -c $(CFLAGS) $(CODE)printer.cpp 
+
 
 $(ODIR)automata.o:$(CODE)automata.cpp $(CODE)automata.h
 	$(CC) -o $(ODIR)automata.o -c $(CFLAGS) $(CODE)automata.cpp 

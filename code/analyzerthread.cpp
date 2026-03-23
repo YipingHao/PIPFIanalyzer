@@ -51,7 +51,8 @@ void* computeThread(void* arg) {
     return NULL;
 }
 
-int FIexpresses::compute(unsigned int threadCount, const double* input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const {
+int FIexpresses::compute(unsigned int threadCount, const double* input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const
+{
     // 检查输入输出的行数是否匹配
     if (rowi != rowo) {
         return -1;
@@ -115,3 +116,5 @@ int FIexpresses::compute(unsigned int threadCount, const double* input, size_t l
     
     return 0;
 }
+
+

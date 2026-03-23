@@ -473,7 +473,7 @@ namespace TemplateSelf
 
 
 		// —— 排序与有序性检查 ——
-// 升序堆排序（非稳定，O(n log n)）
+    // 升序堆排序（非稳定，O(n log n)）
 		void sortAsc() {
 			if (Count < 2) return;
 			const size_t n = Count;
@@ -571,7 +571,7 @@ namespace TemplateSelf
 			pos = lo; // 插入到第一个 <= key 的位置
 			return false;
 		}
-private:
+    private:
 	// 最大堆下滤：用于升序排序
 	inline void siftDownAsc(size_t start, size_t end) {
 		size_t root = start;
@@ -981,3 +981,18 @@ private:
 		inline T& operator[](size_t i) { return content[i]; }
 	};
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

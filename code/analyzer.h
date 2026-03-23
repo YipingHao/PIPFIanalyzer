@@ -86,6 +86,7 @@ namespace analyzer
             int compute(unsigned int threadCount, const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;
             /*
             数据转换函数，将多元多项式的输入转为输出，并且一次转换多条数据，每条数据占据矩阵的一行的开头位置。
+            数据矩阵的存储方式说明：坚定的使用行主元存储，即每个元素的索引为 row * ld + col
             
             参数说明：
             - input: 输入矩阵指针，存储原始数据（如键长坐标）
@@ -111,5 +112,18 @@ namespace analyzer
             返回值：
             - 处理的成功状态或错误码（如果有）
             */
+            int build(FILE*fp);
+            int printCcode(FILE*fp) const;
+            /*
+            将这个FIexpresses对象转换为C语言代码，用于计算PIP多项式的值。
+            参数说明：
+            - fp: 输出文件指针，用于存储生成的C语言代码
+            输出的行数的声明是
+                void compute(const double* inpput, double* output)
+                {
+                }
+            逐一计算每个多项式的值并写入output数组
+            */
+            int printFortrancode(FILE*fp) const;
     };
 }
