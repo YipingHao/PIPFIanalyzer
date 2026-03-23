@@ -41,7 +41,7 @@ int FIexpress::AppendMonomial(const vector<size_t>& monomial)
     }
     
     // 将单项式的指数信息追加到items数组
-    items.appendMove(monomial);
+    items.append(monomial);
     // 增加ItemCount
     ItemCount++;
     
