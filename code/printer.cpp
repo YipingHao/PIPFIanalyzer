@@ -10,13 +10,14 @@ using namespace analyzer;
  * void compute(const double* input, double* output)
  * {
  *     // 计算第0个多项式
- *     double temp = 0;
+ *     double temp;
+ *     temp = 0.0;
  *         temp += input[0] * input[1];
  *         temp += input[2] * input[3];
  *     output[0] = temp;
  *     
  *     // 计算第1个多项式
- *     double temp = 0;
+ *     temp = 0.0;
  *         temp += input[0] * input[2];
  *     output[1] = temp;
  *     
@@ -38,7 +39,7 @@ int FIexpresses::printCcode(FILE* fp) const {
     // 输出函数声明
     fprintf(fp, "void compute(const double* input, double* output)\n");
     fprintf(fp, "{\n");
-    
+    fprintf(fp, "\tdouble temp = 0.0;\n");
     // 遍历每个FIexpress对象
     for (size_t i = 0; i < items.size(); ++i) {
         const FIexpress& expr = items[i];
@@ -48,7 +49,7 @@ int FIexpresses::printCcode(FILE* fp) const {
         
         // 输出计算当前多项式的代码
         fprintf(fp, "    // 计算第 %zu 个多项式\n", i);
-        fprintf(fp, "\tdouble temp = 0;\n");
+        fprintf(fp, "\ttemp = 0.0;\n");
         
         // 遍历每个单项式
         for (size_t j = 0; j < itemCount; ++j) {
