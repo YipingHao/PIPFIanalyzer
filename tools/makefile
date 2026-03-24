@@ -7,7 +7,7 @@ TOOLS = $(BASE)tools/
 TEST = $(BASE)test/
 
 COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o $(ODIR)printer.o
-TestOFile = $(TEST)test.o
+TestOFile = $(TEST)test.o $(TEST)main.o
 HFILES = $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 
 OPTION ?= -O2
@@ -53,6 +53,9 @@ test.exe: $(COFILE) $(TestOFile)
 
 $(TEST)test.o: $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h $(TEST)test.cpp
 	$(CC) -o $(TEST)test.o -c $(CFLAGS) $(TEST)test.cpp
+
+$(TEST)main.o: $(CODE)FIanalyzer.h $(TEST)main.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
+	$(CC) -o $(TEST)main.o -c $(CFLAGS) $(TEST)main.cpp
 
 #$(ODIR)FIanalyzer.o:$(CODE)FIanalyzer.cpp $(CODE)FIanalyzer.h
 #	$(CC) -o $(ODIR)FIanalyzer.o -c -std=c++11 -O3  $(CODE)FIanalyzer.cpp

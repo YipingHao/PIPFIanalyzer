@@ -1,6 +1,10 @@
 #include "../code/dictionary.h"
 #include <cstring>
 
+int TestEntrance(hyperlex::dictionary&dict);
+
+int static TaskEntrance(hyperlex::dictionary&dict);
+
 int main(int argc, char* argv[])
 {
     hyperlex::dictionary dict;
@@ -22,7 +26,21 @@ int main(int argc, char* argv[])
         return 1;
     }
     
+    const char * task = dict.search("test","item");
+    printf("task: %s\n", task);
     
+
+    if (strcmp(task, "test") == 0) {
+        return TestEntrance(dict);
+    }
+    else {
+        return TaskEntrance(dict);
+    }
+    return 0;
+}
+
+int static TaskEntrance(hyperlex::dictionary&dict)
+{
 
     return 0;
 }
