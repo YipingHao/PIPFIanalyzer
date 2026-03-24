@@ -5,8 +5,8 @@
 //         Keys are crucial too, don't change the former keys of the input values.
 //=======================================================================================================
 {
-	PIPFileName = "./data/vain.txt";
-    DataFileName = "./data/O4.txt";
+	PIPFileName = "./data/O4.txt";
+    DataFileName = "./data/vain.txt";
 	OutputFileName = "L";//Prefix is only needed
 
     threadCount = 32;
@@ -14,7 +14,9 @@
 	//item = "test";
     item = "dataswitch";
     CcodePrint = true; 
+	//CcodePrint = false;
     FortranCodePrint = true;
+	//FortranCodePrint = false;
 	TestItem = 
 	{
 		item = 3;

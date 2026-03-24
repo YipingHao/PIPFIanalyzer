@@ -164,8 +164,8 @@ make test.exe
 
 ```json
 {
-    PIPFileName = "./data/vain.txt";      // PIP表达式文件路径
-    DataFileName = "./data/O4.txt";      // 键长坐标-能量数据点文件
+    PIPFileName = "./data/O4.txt";      // PIP表达式文件路径
+    DataFileName = "./data/vain.txt";      // 键长坐标-能量数据点文件
     OutputFileName = "L";                 // 输出文件前缀（会自动添加.txt/.c/.f后缀）
     threadCount = 32;                     // 线程数量（仅用于数据转换模式）
     item = "dataswitch";                  // 运行模式："dataswitch"（主要功能）或"test"（开发测试）
@@ -177,15 +177,50 @@ make test.exe
 }
 ```
 
+#### C风格注释
+
+参数文件支持C风格的注释，包括单行注释（`//`）和多行注释（`/* */`）。例如：
+
+```json
+{
+    PIPFileName = "./data/vain.txt";      // 这是单行注释
+    /* 这是
+       多行
+       注释 */
+    DataFileName = "./data/O4.txt";
+}
+```
+
+可以通过注释来暂时屏蔽某个参数项，例如：
+
+```json
+{
+   CcodePrint = true; 
+   //CcodePrint = false; 
+}
+```
+在运行时，CcodePrint = false这个设置被注释，不会生成C语言代码文件。
+
+#### 格式要求
+
+- 所有参数项末尾必须有分号（`;`）。
+- 参数项的键名必须是唯一的，不能重复。
+- 参数项的值可以是字符串、整数、浮点数、布尔值。
+- 布尔值必须是`true`或`false`，不能是其他字符串。
+
+
+
 ### 运行模式
 
 #### 数据转换模式（item = "dataswitch"）
 
-这是软件的主要功能，用于将键长坐标-能量数据点转换为PIP多项式数据：
+这是软件的主要功能，用于将键长坐标-能量数据点转换为PIP多项式数据。也可在完成功能时顺便将PIP表达式转换为C语言代码或者Fortran语言代码：
 
 ```bash
 ./run.sh -i ./parameter/input.txt -o ./output/
 ```
+**如何启用本模式**：
+- 在参数文件中设置`item = "dataswitch"`
 
 **输入文件**：
 - `PIPFileName`：PIP表达式文件路径
@@ -195,6 +230,11 @@ make test.exe
 - `<OutputFileName>.txt`：转换后的数据文件
 - `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
 - `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
+
+**如何启用代码生成**：
+- 在参数文件中设置`CcodePrint = true`启用C代码生成
+- 在参数文件中设置`FortranCodePrint = true`启用Fortran代码生成
+- 两个选项可以同时启用
 
 **注意**：
 - 多线程功能仅用于数据转换模式
@@ -224,6 +264,8 @@ P[2] = r[0] * r[5] + r[1] * r[4] + r[2] * r[3];
 其中：
 - `P[i]`：第i个PIP多项式
 - `r[j]`：第j个变量（通常是键长或其他几何参数）
+- 可以使用圆括号代替方括号来表示下标
+- p和r可以换成任意的C语言支持的变量名（标识符）
 - 支持的运算符：`+`（加法）、`*`（乘法）
 
 ### 多线程计算
@@ -267,10 +309,10 @@ threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
 ./run.sh -g
 ```
 
-或指定gdb选项：
+也可以在这里指定输入输出文件：
 
 ```bash
-./run.sh -g --args ./test/test.exe input_file output_file
+./run.sh -g -i input_file -o  output_file
 ```
 
 ### 输出文件说明
