@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     int error = dict.build(parameterPath);
     dict.print(stdout);
     if (error != 0) {
-        printf("Error when reading parameter file: %s\n", parameterPath);
-        return 1;
+        printf("Error when reading parameter file: %s, error: %d\n", parameterPath, error);
+        return error;
     }
     
     const char * task = dict.search("test","item");
