@@ -279,7 +279,7 @@ namespace analyzer
  * 5. 将解析的浮点数存储到输出矩阵中
  * 6. 返回矩阵的行数和列数
  */
-int analyzer::ParserDataMatrix(FILE*inputMat,vector<double> & matrix, size_t &row, size_t &col)
+int ParserDataMatrix(FILE*inputMat,vector<double> & matrix, size_t &row, size_t &col)
 {
     tokenstream TS;
     int error = TS.Build<sheet::FIL>(inputMat);
