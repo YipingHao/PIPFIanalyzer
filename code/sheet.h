@@ -7,26 +7,27 @@ struct FIL
 	{
 		_identifier_ = 1,
 		_integer_ = 2,
-		_CommonChar_ = 3,
-		_spaces_ = 4,
-		_enters_ = 5,
-		_tab_ = 6,
-		_semicolon_ = 7,
-		_colon_ = 8,
-		_dot_ = 9,
-		_braceL_ = 10,
-		_braceR_ = 11,
-		_left_ = 12,
-		_right_ = 13,
-		_squareL_ = 14,
-		_squareR_ = 15,
-		_angleL_ = 16,
-		_angleR_ = 17,
-		_anntationS_ = 18,
-		_anntationM_ = 19,
-		_multi_ = 20,
-		_add_ = 21,
-		_assign_ = 22
+		_real_ = 3,
+		_CommonChar_ = 4,
+		_spaces_ = 5,
+		_enters_ = 6,
+		_tab_ = 7,
+		_semicolon_ = 8,
+		_colon_ = 9,
+		_dot_ = 10,
+		_braceL_ = 11,
+		_braceR_ = 12,
+		_left_ = 13,
+		_right_ = 14,
+		_squareL_ = 15,
+		_squareR_ = 16,
+		_angleL_ = 17,
+		_angleR_ = 18,
+		_anntationS_ = 19,
+		_anntationM_ = 20,
+		_multi_ = 21,
+		_add_ = 22,
+		_assign_ = 23
 	};
 	enum group
 	{
@@ -90,7 +91,7 @@ namespace sheet
 	static const size_t TerminalCount;
 	static const size_t RulesCount;
 	static const int GOTO[22][8];
-	static const int ACTION[22][23];
+	static const int ACTION[22][24];
 	static const int RulesToSymbol[12];
 	static const int RulesLength[12];
 	static const char* const RulesName[12];
