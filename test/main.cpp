@@ -60,7 +60,7 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
     // 生成C代码
     if (CcodePrint) {
         std::string cFilePath = ChangeSuffix(fileName, ".c");
-        FilePath filetemp;
+        hyperlex::FilePath filetemp;
         hyperlex::FilePath OutputFilePath;
         OutputFilePath.build(OutputFileName);
         filetemp.build(cFilePath.c_str());
@@ -69,16 +69,16 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
         if (cFile != NULL) {
             expressions.printCcode(cFile);
             fclose(cFile);
-            printf("C code generated: %s\n", cFilePath);
+            printf("C code generated: %s\n", OutputFilePath.path());
         } else {
-            printf("Error opening C code file for writing: %s\n", cFilePath);
+            printf("Error opening C code file for writing: %s\n", OutputFilePath.path());
         }
     }
 
     // 生成Fortran代码
     if (FortranCodePrint) {
         std::string fortranFilePath = ChangeSuffix(fileName, ".f90");
-        FilePath filetemp;
+        hyperlex::FilePath filetemp;
         hyperlex::FilePath OutputFilePath;
         OutputFilePath.build(OutputFileName);
         filetemp.build(fortranFilePath.c_str());
@@ -87,9 +87,9 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
         if (fortranFile != NULL) {
             expressions.printFortrancode(fortranFile);
             fclose(fortranFile);
-            printf("Fortran code generated: %s\n", fortranFilePath);
+            printf("Fortran code generated: %s\n", OutputFilePath.path());
         } else {
-            printf("Error opening Fortran code file for writing: %s\n", fortranFilePath);
+            printf("Error opening Fortran code file for writing: %s\n", OutputFilePath.path());
         }
     }
 }
