@@ -111,18 +111,17 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
 
 void FIexpress::demo(FILE*fp) const
 {
-    fprintf(fp, "FIexpress: order=%d, ItemCount=%zu, polynomial:", order, ItemCount);
+    fprintf(fp, "FIexpress: order=%d, ItemCount=%zu, polynomial:\n\t", order, ItemCount);
     for (size_t i = 0; i < ItemCount; ++i) 
     {
-            fprintf(fp, "  ");
             for (int j = 0; j < order; ++j) {
                 size_t varIndex = items[i * order + j];
                 fprintf(fp, "x[%zu]", varIndex);
-                if (j < order - 1) {
+                if (j + 1 < order) {
                     fprintf(fp, " * ");
                 }
             }
-            if (i < ItemCount - 1) {
+            if (i + 1 < ItemCount) {
                 fprintf(fp, " + ");
             }
             else
@@ -139,7 +138,7 @@ void FIexpress::DemoSimple(FILE*fp) const
         for (int j = 0; j < order; ++j) {
             size_t varIndex = items[j];
             fprintf(fp, "x[%zu]", varIndex);
-            if (j < order - 1) {
+            if (j + 1 < order) {
                 fprintf(fp, " * ");
             }
         }
