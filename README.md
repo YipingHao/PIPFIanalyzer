@@ -1,5 +1,33 @@
 # 不变多项式分析软件
 
+## 开源许可
+
+本软件采用 MIT 许可证开源。
+
+```
+MIT License
+
+Copyright (c) 2025 郝一平
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## 介绍
 用于计算化学不变量多项式势能面拟合的工具。不变量是指置换不变多项式(PIP)和基本不变量FI.
 
@@ -50,9 +78,10 @@ PIP 和 FI 是密切相关的概念：
 ### 编译步骤
 
 1. **克隆或下载源代码**
+   目前仅仅在gitee上有开源链接
    ```bash
    cd /path/to/your/workspace
-   git clone <repository-url>
+   git clone https://gitee.com/hao-yiping/FIanalyzer.git
    cd FIanalyzer
    ```
 
@@ -136,72 +165,50 @@ make test.exe
 ```json
 {
     PIPFileName = "./data/vain.txt";      // PIP表达式文件路径
-    DataFileName = "./data/O4.txt";      // 数据文件路径
-    OutputFileName = "L";                 // 输出文件前缀
-    threadCount = 32;                     // 线程数量
-    item = "dataswitch";                  // 运行模式："test"或"dataswitch"
-    CcodePrint = true;                    // 是否生成C代码
-    FortranCodePrint = true;              // 是否生成Fortran代码
+    DataFileName = "./data/O4.txt";      // 键长坐标-能量数据点文件
+    OutputFileName = "L";                 // 输出文件前缀（会自动添加.txt/.c/.f后缀）
+    threadCount = 32;                     // 线程数量（仅用于数据转换模式）
+    item = "dataswitch";                  // 运行模式："dataswitch"（主要功能）或"test"（开发测试）
+    CcodePrint = true;                    // 是否生成C代码（附加功能）
+    FortranCodePrint = true;              // 是否生成Fortran代码（附加功能）
     TestItem = {
-        item = 3;                         // 测试项编号
+        item = 3;                         // 测试项编号（仅用于test模式）
     };
 }
 ```
 
 ### 运行模式
 
-#### 1. 代码生成模式（item = "test"）
+#### 数据转换模式（item = "dataswitch"）
 
-将PIP表达式文件转换为C或Fortran代码：
-
-```bash
-./run.sh -i ./parameter/input.txt -o ./output/
-```
-
-生成的代码文件：
-- `<OutputFileName>.c`：C语言代码
-- `<OutputFileName>.f`：Fortran语言代码
-
-生成的代码包含`compute`函数，用于计算PIP多项式的值：
-
-**C代码示例**：
-```c
-void compute(const double* input, double* output)
-{
-    // 计算每个PIP多项式的值
-    output[0] = input[0] + input[1] + ...;
-    output[1] = input[0] * input[1] + ...;
-    // ...
-}
-```
-
-**Fortran代码示例**：
-```fortran
-subroutine compute(input, output)
-    implicit none
-    real*8, intent(in) :: input(:)
-    real*8, intent(out) :: output(:)
-    ! 计算每个PIP多项式的值
-    output(1) = input(1) + input(2) + ...
-    output(2) = input(1) * input(2) + ...
-    ! ...
-end subroutine compute
-```
-
-#### 2. 数据转换模式（item = "dataswitch"）
-
-将笛卡尔坐标的势能和构型数据转换为PIP多项式数据：
+这是软件的主要功能，用于将键长坐标-能量数据点转换为PIP多项式数据：
 
 ```bash
 ./run.sh -i ./parameter/input.txt -o ./output/
 ```
 
-输入数据文件格式（如`O4.txt`）：
-- 每行代表一个构型的PIP表达式
-- 格式：`P[i] = r[0] * r[1] + r[2] * r[3] + ...;`
+**输入文件**：
+- `PIPFileName`：PIP表达式文件路径
+- `DataFileName`：键长坐标-能量数据点文件
 
-输出数据：
-- 转换后的PIP多项式数据存储在输出目录中
+**输出文件**：
+- `<OutputFileName>.txt`：转换后的数据文件
+- `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
+- `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
+
+**注意**：
+- 多线程功能仅用于数据转换模式
+- 代码生成是数据转换的附加功能
+
+#### 测试模式（item = "test"）
+
+此模式仅给软件开发人员使用，用于测试功能：
+
+```bash
+./run.sh -i ./parameter/input.txt -o ./output/
+```
+
+普通用户无需使用此模式。
 
 ### PIP表达式文件格式
 
@@ -221,44 +228,36 @@ P[2] = r[0] * r[5] + r[1] * r[4] + r[2] * r[3];
 
 ### 多线程计算
 
-软件支持多线程计算以提高性能。在参数文件中设置`threadCount`参数：
+软件在数据转换模式下支持多线程计算以提高性能。在参数文件中设置`threadCount`参数：
 
 ```json
-threadCount = 32;  // 使用32个线程
+threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
 ```
 
 ### 使用示例
 
-**示例1：生成C代码**
+**数据转换（带代码生成）**
 
-1. 准备PIP表达式文件`my_pip.txt`
+1. 准备PIP表达式文件`my_pip.txt`和键长坐标-能量数据点文件
 2. 创建参数文件`my_input.txt`：
    ```json
    {
        PIPFileName = "./data/my_pip.txt";
        DataFileName = "./data/O4.txt";
        OutputFileName = "my_output";
-       threadCount = 16;
-       item = "test";
-       CcodePrint = true;
-       FortranCodePrint = false;
-       TestItem = { item = 0; };
+       threadCount = 16;  // 使用16个线程进行数据转换
+       item = "dataswitch";  // 使用主要功能模式
+       CcodePrint = true;  // 同时生成C代码
+       FortranCodePrint = false;  // 不生成Fortran代码
    }
    ```
 3. 运行程序：
    ```bash
    ./run.sh -I my_input.txt -o ./my_output/
    ```
-4. 生成的C代码在`./my_output/my_output.c`
-
-**示例2：数据转换**
-
-1. 准备数据文件
-2. 设置参数文件中的`item = "dataswitch"`
-3. 运行程序：
-   ```bash
-   ./run.sh -i ./parameter/input.txt -o ./output/
-   ```
+4. 输出文件：
+   - `./my_output/my_output.txt`：转换后的数据文件
+   - `./my_output/my_output.c`：生成的C语言代码
 
 ### 调试模式
 
@@ -276,12 +275,13 @@ threadCount = 32;  // 使用32个线程
 
 ### 输出文件说明
 
-- **代码生成模式**：
-  - `<OutputFileName>.c`：生成的C语言代码
-  - `<OutputFileName>.f`：生成的Fortran语言代码
-
 - **数据转换模式**：
-  - 转换后的数据文件（根据具体配置）
+  - `<OutputFileName>.txt`：转换后的数据文件
+  - `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
+  - `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
+
+- **测试模式**：
+  - 测试输出文件（仅开发人员使用）
 
 ### 注意事项
 
@@ -465,23 +465,26 @@ int threadCount = dict.search(1, "threadCount");
 ### 数据流图
 
 ```
-输入文件（PIP表达式）
-    ↓
+输入文件
+┌───────────────────┴───────────────────┐
+│                                       │
+PIP表达式文件                      键长坐标-能量数据点文件
+│                                       │
+└───────────────────┬───────────────────┘
+                    ↓
 参数文件解析（dictionary）
-    ↓
+                    ↓
 词法分析（FIL）
-    ↓
+                    ↓
 语法分析（FIG/LR）
-    ↓
+                    ↓
 构建多项式对象（FIexpresses）
-    ↓
-┌─────────────┴─────────────┐
-│                           │
-代码生成路径                数据转换路径
-│                           │
-printCcode/printFortrancode  compute（多线程）
-│                           │
-C/Fortran代码              转换后的数据
+                    ↓
+┌───────────────────┴───────────────────┐
+│                                       │
+主要功能：数据转换（多线程）        附加功能：代码生成
+│                                       │
+转换后的数据文件（.txt）           C/Fortran代码文件（.c/.f）
 ```
 
 ### 线程模型
