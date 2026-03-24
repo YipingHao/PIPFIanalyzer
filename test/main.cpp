@@ -54,17 +54,18 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
     bool CcodePrint = dict.search(false,"CcodePrint");
     bool FortranCodePrint = dict.search(false,"FortranCodePrint");
     const char * OutputFileName = dict.search("output","OutputFileName");
+    std::string fileName = OutputFileName;
 
-    hyperlex::FilePath OutputFilePath;
-    OutputFilePath.build(OutputFileName);
-    OutputFilePath += ".txt";
-    OutputFilePath += ".c";
-    OutputFilePath += ".f90";
+
     // 生成C代码
     if (CcodePrint) {
-        char cFilePath[256];
-        snprintf(cFilePath, sizeof(cFilePath), "%s/%s.c", outputPath, OutputFileName);
-        FILE* cFile = fopen(cFilePath, "w");
+        std::string cFilePath = ChangeSuffix(fileName, ".c");
+        FilePath filetemp;
+        hyperlex::FilePath OutputFilePath;
+        OutputFilePath.build(OutputFileName);
+        filetemp.build(cFilePath.c_str());
+        OutputFilePath += filetemp;
+        FILE* cFile = fopen(OutputFilePath.path(), "w");
         if (cFile != NULL) {
             expressions.printCcode(cFile);
             fclose(cFile);
@@ -76,9 +77,13 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
 
     // 生成Fortran代码
     if (FortranCodePrint) {
-        char fortranFilePath[256];
-        snprintf(fortranFilePath, sizeof(fortranFilePath), "%s/%s.f90", outputPath, OutputFileName);
-        FILE* fortranFile = fopen(fortranFilePath, "w");
+        std::string fortranFilePath = ChangeSuffix(fileName, ".f90");
+        FilePath filetemp;
+        hyperlex::FilePath OutputFilePath;
+        OutputFilePath.build(OutputFileName);
+        filetemp.build(fortranFilePath.c_str());
+        OutputFilePath += filetemp;
+        FILE* fortranFile = fopen(OutputFilePath.path(), "w");
         if (fortranFile != NULL) {
             expressions.printFortrancode(fortranFile);
             fclose(fortranFile);
