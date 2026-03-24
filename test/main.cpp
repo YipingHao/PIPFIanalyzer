@@ -62,7 +62,7 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
         std::string cFilePath = ChangeSuffix(fileName, ".c");
         hyperlex::FilePath filetemp;
         hyperlex::FilePath OutputFilePath;
-        OutputFilePath.build(OutputFileName);
+        OutputFilePath.build(outputPath);
         filetemp.build(cFilePath.c_str());
         OutputFilePath += filetemp;
         FILE* cFile = fopen(OutputFilePath.path(), "w");
@@ -80,7 +80,7 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
         std::string fortranFilePath = ChangeSuffix(fileName, ".f90");
         hyperlex::FilePath filetemp;
         hyperlex::FilePath OutputFilePath;
-        OutputFilePath.build(OutputFileName);
+        OutputFilePath.build(outputPath);
         filetemp.build(fortranFilePath.c_str());
         OutputFilePath += filetemp;
         FILE* fortranFile = fopen(OutputFilePath.path(), "w");
