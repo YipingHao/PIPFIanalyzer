@@ -1,10 +1,12 @@
 #include "../code/dictionary.h"
 #include "../code/analyzer.h"
 #include <cstring>
+#include <string>
 
-int TestEntrance(hyperlex::dictionary&dict);
+int TestEntrance(hyperlex::dictionary&dict, const char* outputPath);
 
-int static TaskEntrance(hyperlex::dictionary&dict);
+int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath);
+std::string static ChangeSuffix(const std::string& file, const char* new_one);
 
 int main(int argc, char* argv[])
 {
@@ -39,15 +41,51 @@ int main(int argc, char* argv[])
     
 
     if (strcmp(task, "test") == 0) {
-        return TestEntrance(dict);
+        return TestEntrance(dict, outputPath);
     }
     else {
-        return TaskEntrance(dict);
+        return TaskEntrance(dict, outputPath);
     }
     return 0;
 }
 
-int static TaskEntrance(hyperlex::dictionary&dict)
+void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, analyzer::FIexpresses & expressions)
+{
+    bool CcodePrint = dict.search(false,"CcodePrint");
+    bool FortranCodePrint = dict.search(false,"FortranCodePrint");
+    const char * OutputFileName = dict.search("output","OutputFileName");
+
+    hyperlex::FilePath OutputFilePath(OutputFileName);
+    // 生成C代码
+    if (CcodePrint) {
+        char cFilePath[256];
+        snprintf(cFilePath, sizeof(cFilePath), "%s/%s.c", outputPath, OutputFileName);
+        FILE* cFile = fopen(cFilePath, "w");
+        if (cFile != NULL) {
+            expressions.printCcode(cFile);
+            fclose(cFile);
+            printf("C code generated: %s\n", cFilePath);
+        } else {
+            printf("Error opening C code file for writing: %s\n", cFilePath);
+        }
+    }
+
+    // 生成Fortran代码
+    if (FortranCodePrint) {
+        char fortranFilePath[256];
+        snprintf(fortranFilePath, sizeof(fortranFilePath), "%s/%s.f90", outputPath, OutputFileName);
+        FILE* fortranFile = fopen(fortranFilePath, "w");
+        if (fortranFile != NULL) {
+            expressions.printFortrancode(fortranFile);
+            fclose(fortranFile);
+            printf("Fortran code generated: %s\n", fortranFilePath);
+        } else {
+            printf("Error opening Fortran code file for writing: %s\n", fortranFilePath);
+        }
+    }
+}
+
+int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
 {
     const char * DataFileName = dict.search("./data/origin.txt","DataFileName");
     printf("DataFileName: %s\n", DataFileName);
@@ -69,6 +107,30 @@ int static TaskEntrance(hyperlex::dictionary&dict)
 
     expressions.demo(stdout);
 
-    
+    CodeGeneration(dict, outputPath, expressions);
+
     return 0;
+}
+
+
+std::string static ChangeSuffix(const std::string& file, const char* new_one)
+{
+    size_t i, j;
+    std::string name;
+    name = "";
+    for (i = file.length(); i != 0; i--)
+        if (file[i - 1] == '.') break;
+    if (i == 0)
+    {
+        name = file;
+        name += '.';
+    }
+    else
+    {
+        for (j = 0; j < i; j++)
+            name += file[j];
+    }
+    if (new_one[0] == '.') name += (new_one + 1);
+    else name += new_one;
+    return name;
 }

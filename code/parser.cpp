@@ -137,7 +137,7 @@ int build_raw(FILE*fp, vector<FIexpress> &exps, vector<size_t> &sites)
     {
         //error_record00 = GrammarTree::ActionError;
         fprintf(stderr, "head: %zu\n", ASTree->error_record01);
-        fprintf(stderr, "top: %zu\n", ASTree->error_record01);
+        fprintf(stderr, "top: %zu\n", ASTree->error_record02);
         delete ASTree;
         return error;
     }
