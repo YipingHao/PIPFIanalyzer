@@ -6,7 +6,7 @@
 //=======================================================================================================
 {
 	PIPFileName = "./data/vain.txt";
-    DataFileName = "./data/origin.txt";
+    DataFileName = "./data/O4.txt";
 	OutputFileName = "L.txt";//Prefix is only needed
 
     threadCount = 32;

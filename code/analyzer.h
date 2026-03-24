@@ -75,6 +75,8 @@ namespace analyzer
             - 如果目前items数组为不空，且monomial的长度与order不相同，则返回-1
             - 输出: 错误码: 0 成功，-1 失败（如指数向量长度错误）
             */
+            void demo(FILE*fp = stdout) const;
+            void DemoSimple(FILE*fp = stdout) const;
     };
     class FIexpresses
     {
@@ -189,6 +191,7 @@ namespace analyzer
             每个多项式占一个独立的计算块，使用临时变量temp累加所有单项式的值，
             最后将结果写入output数组的对应位置。
             */
+            void demo(FILE*fp = stdout) const;
     };
 
     struct errorinfo

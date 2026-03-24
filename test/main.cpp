@@ -1,4 +1,5 @@
 #include "../code/dictionary.h"
+#include "../code/analyzer.h"
 #include <cstring>
 
 int TestEntrance(hyperlex::dictionary&dict);
@@ -48,6 +49,26 @@ int main(int argc, char* argv[])
 
 int static TaskEntrance(hyperlex::dictionary&dict)
 {
+    const char * DataFileName = dict.search("./data/origin.txt","DataFileName");
+    printf("DataFileName: %s\n", DataFileName);
+    FILE*fp = fopen(DataFileName, "r");
+    if (fp == NULL) {
+        printf("Error when opening data file: %s\n", DataFileName);
+        return 1123;
+    }
+    analyzer::FIexpresses expressions;
+    int error = expressions.build(fp);
+    fclose(fp);
+    if (error != 0) {
+        printf("Error when reading data file: %s, error: %d\n", DataFileName, error);
+        return error;
+    }
+    else {
+        printf("read data file end:\n");
+    }
 
+    expressions.demo(stdout);
+
+    
     return 0;
 }

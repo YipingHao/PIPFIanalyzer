@@ -109,6 +109,77 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
     return 0;
 }
 
+void FIexpress::demo(FILE*fp) const
+{
+    fprintf(fp, "FIexpress: order=%d, ItemCount=%zu\n", order, ItemCount);
+    if (ItemCount < 32) {
+        for (size_t i = 0; i < ItemCount; ++i) {
+            fprintf(fp, "  ");
+            for (int j = 0; j < order; ++j) {
+                size_t varIndex = items[i * order + j];
+                fprintf(fp, "x[%zu]", varIndex);
+                if (j < order - 1) {
+                    fprintf(fp, " * ");
+                }
+            }
+            if (i < ItemCount - 1) {
+                fprintf(fp, " +");
+            }
+            fprintf(fp, "\n");
+        }
+    } else {
+        fprintf(fp, "  Too many monomials (%zu), showing basic info only\n", ItemCount);
+    }
+    fflush(fp);
+}
+
+void FIexpress::DemoSimple(FILE*fp) const
+{
+    fprintf(fp, "FIexpress: order=%d, ItemCount=%zu\n", order, ItemCount);
+    if (ItemCount > 0) {
+        fprintf(fp, "  ");
+        for (int j = 0; j < order; ++j) {
+            size_t varIndex = items[j];
+            fprintf(fp, "x[%zu]", varIndex);
+            if (j < order - 1) {
+                fprintf(fp, " * ");
+            }
+        }
+        if (ItemCount > 1) {
+            fprintf(fp, " + ...");
+        }
+        fprintf(fp, "\n");
+    }
+    fflush(fp);
+}
+
+void FIexpresses::demo(FILE*fp) const
+{
+    fprintf(fp, "FIexpresses: total=%zu, highestOrder=%d, XCount=%zu\n", items.size(), highestOrder, XCount);
+    
+    if (items.size() < 32) {
+        for (size_t i = 0; i < items.size(); ++i) {
+            fprintf(fp, "  FIexpress %zu:", i);
+            items[i].demo(fp);
+        }
+    } else {
+        fprintf(fp, "  Too many FIexpress objects (%zu), showing first 32 with simple info\n", items.size());
+        for (size_t i = 0; i < 32; ++i) {
+            fprintf(fp, "  FIexpress %zu:", i);
+            items[i].DemoSimple(fp);
+        }
+    }
+    
+    // 无论什么情况都要打印 OrderCount
+    fprintf(fp, "  Order distribution:\n");
+    for (size_t i = 0; i < OrderCount.size(); ++i) {
+        if (OrderCount[i] > 0) {
+            fprintf(fp, "    Order %zu: %zu polynomials\n", i, OrderCount[i]);
+        }
+    }
+    fflush(fp);
+}
+
 void errorinfo::demo(FILE*fp) const
 {
     fprintf(fp, "line %d, %s, expect %s\n", line, msg, symbol);
