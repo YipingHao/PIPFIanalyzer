@@ -51,7 +51,7 @@ void static NeglectNullToken(tokenstream& eme)
 }
 size_t static returnSiteTOKEN(GTNode* GT, tokenstream& TS)
 {
-    checkNode(GT, sheet::FIG::nonterminal::_TOKEN_, __LINE__, "returnSiteTOKEN");
+    checkNode(GT, sheet::FIG::_TOKEN_, __LINE__, "returnSiteTOKEN");
     GTNode* offset = GT->child(2);
     return TS.GetInt(offset->root().site);
 }
@@ -69,7 +69,7 @@ void static buildMonomial(vector<size_t>& monomial, tokenstream& TS, GTNode* GT)
             sheet::FIG::nonterminal RR = (sheet::FIG::nonterminal)(sheet::FIG::RulesToSymbol[GT->root().site]);
             if (GT->root().rules)
             {
-                if(RR == sheet::FIG::nonterminal::_TOKEN_)
+                if(RR == sheet::FIG::_TOKEN_)
                 {
                     monomial.append(returnSiteTOKEN(GT, TS));
                     iterator.state() = 1;
@@ -87,8 +87,8 @@ int static buildSingleExpress(size_t & siteO, FIexpress & expO, tokenstream& TS,
     int error = 0;
     GTNode* Lvalue = GT->child(0);
     GTNode* Rvalue = GT->child(2);
-    checkNode(Lvalue, sheet::FIG::rules::Lvalue_only_, __LINE__, "buildSingleExpress");
-    checkNode(Rvalue, sheet::FIG::rules::Rvalue_only_, __LINE__, "buildSingleExpress");
+    checkNode(Lvalue, sheet::FIG::Lvalue_only_, __LINE__, "buildSingleExpress");
+    checkNode(Rvalue, sheet::FIG::Rvalue_only_, __LINE__, "buildSingleExpress");
     siteO = returnSiteTOKEN(Lvalue->child(0), TS);
     
     vector<size_t> monomial;
@@ -103,7 +103,7 @@ int static buildSingleExpress(size_t & siteO, FIexpress & expO, tokenstream& TS,
             sheet::FIG::nonterminal RR = (sheet::FIG::nonterminal)(sheet::FIG::RulesToSymbol[GT->root().site]);
             if (GT->root().rules)
             {
-                if(RR == sheet::FIG::nonterminal::_ITEM_)
+                if(RR == sheet::FIG::_ITEM_)
                 {
                    buildMonomial(monomial, TS, GT);
                    error = expO.AppendMonomial(monomial);
