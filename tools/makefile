@@ -6,7 +6,7 @@ CODE = $(BASE)code/
 TOOLS = $(BASE)tools/
 TEST = $(BASE)test/
 
-COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o $(ODIR)printer.o
+COFILE = $(ODIR)sheet.o $(ODIR)analyzer.o $(ODIR)automata.o $(ODIR)dictionary.o $(ODIR)analyzerthread.o $(ODIR)printer.o $(ODIR)parser.o
 TestOFile = $(TEST)test.o $(TEST)main.o
 HFILES = $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 
@@ -41,6 +41,8 @@ $(ODIR)analyzerthread.o:$(CODE)analyzerthread.cpp $(CODE)analyzer.h $(CODE)sheet
 $(ODIR)printer.o:$(CODE)printer.cpp $(HFILES)
 	$(CC) -o $(ODIR)printer.o -c $(CFLAGS) $(CODE)printer.cpp 
 
+$(ODIR)parser.o:$(CODE)parser.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
+	$(CC) -o $(ODIR)parser.o -c $(CFLAGS) $(CODE)parser.cpp 
 
 $(ODIR)automata.o:$(CODE)automata.cpp $(CODE)automata.h
 	$(CC) -o $(ODIR)automata.o -c $(CFLAGS) $(CODE)automata.cpp 
