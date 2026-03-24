@@ -201,4 +201,6 @@ namespace analyzer
         const char* symbol;
         void demo(FILE*fp = stderr) const;
     };
-}
+    
+    int ParserDataMatrix(FILE*inputMat, vector<double> & matrix, size_t &row, size_t &col);
+} 

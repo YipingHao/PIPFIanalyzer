@@ -1,13 +1,15 @@
 #include "analyzer.h"
 #include "sheet.h"
 #include "automata.h"
-using namespace analyzer;
+
 
 typedef hyperlex::Morpheme tokenstream;
 typedef hyperlex::GrammarTree AST;
 typedef hyperlex::tree<hyperlex::GrammarTree::TreeInfor> GTNode;
 typedef hyperlex::tree<hyperlex::GrammarTree::TreeInfor>::PostIterator GTiterator;
 
+namespace analyzer
+{
 
 void static checkNode(GTNode* GT, sheet::FIG::nonterminal expect, size_t line, const char* msg)
 {
@@ -252,6 +254,122 @@ int FIexpresses::build(FILE*fp)
 }
 
 
+}
 
 
+namespace analyzer
+
+{
+
+/**
+ * ParserDataMatrix - 解析数据矩阵文件，提取浮点数数据并检查每行数目是否相等
+ * 
+ * @param inputMat - 输入文件指针
+ * @param matrix - 输出矩阵，存储解析的浮点数数据
+ * @param row - 输出参数，矩阵的行数
+ * @param col - 输出参数，矩阵的列数
+ * 
+ * @return 0 - 成功，-1 - 行长度不一致，其他非零值 - 词法分析错误
+ * 
+ * 功能说明：
+ * 1. 使用词法分析器解析输入文件，识别浮点数和整数
+ * 2. 过滤无效词元（如空格、注释等）
+ * 3. 忽略空行
+ * 4. 检查每一行的浮点数数目是否相等
+ * 5. 将解析的浮点数存储到输出矩阵中
+ * 6. 返回矩阵的行数和列数
+ */
+int analyzer::ParserDataMatrix(FILE*inputMat,vector<double> & matrix, size_t &row, size_t &col)
+{
+    tokenstream TS;
+    int error = TS.Build<sheet::FIL>(inputMat);
+    if(error != 0)
+    {
+        return error;
+    }
+    NeglectNullToken(TS);
+
+    size_t currentLine = 0;
+    size_t currentCol = 0;
+    size_t expectedCols = 0;
+    bool firstLine = true;
+    vector<double> rowData;
+    size_t actualRowCount = 0;
+
+    for (size_t i = 0; i < TS.GetCount(); i++)
+    {
+        if(!TS.valid(i))
+            continue;
+        
+        sheet::FIL::regular T = (sheet::FIL::regular)(TS[i].accept);
+        size_t line = TS[i].line;
+        
+        if(line > currentLine )
+        {
+            // 检查当前行是否为空行
+            if(currentCol > 0)
+            {
+                if(firstLine)
+                {
+                    expectedCols = currentCol;
+                    firstLine = false;
+                }
+                else if(currentCol != expectedCols)
+                {
+                    return -1; // 行长度不一致
+                }
+                
+                for(size_t j = 0; j < rowData.count(); j++)
+                {
+                    matrix.append(rowData[j]);
+                }
+                rowData.clear();
+                actualRowCount++;
+            }
+            
+            currentLine = line;
+            currentCol = 0;
+        }
+        
+        if(T == sheet::FIL::_real_ || T == sheet::FIL::_integer_)
+        {
+            double value;
+            if(T == sheet::FIL::_real_)
+            {
+                value = TS.GetReal(i);
+            }
+            else
+            {
+                value = (double)TS.GetInt(i);
+            }
+            rowData.append(value);
+            currentCol++;
+        }
+    }
+    
+    if(!rowData.empty())
+    {
+        if(firstLine)
+        {
+            expectedCols = currentCol;
+        }
+        else if(currentCol != expectedCols)
+        {
+            return -1; // 行长度不一致
+        }
+        
+        for(size_t j = 0; j < rowData.count(); j++)
+        {
+            matrix.append(rowData[j]);
+        }
+        actualRowCount++;
+    }
+    
+    row = actualRowCount;
+    col = expectedCols;
+    
+    return 0;
+}
+
+}
 

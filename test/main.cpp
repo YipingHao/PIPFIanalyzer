@@ -94,6 +94,9 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
     }
 }
 
+
+
+
 int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
 {
     const char * PIPFileName = dict.search("./data/origin.txt","PIPFileName");
