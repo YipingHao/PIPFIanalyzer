@@ -25,11 +25,11 @@ void static checkNode(GTNode* GT, sheet::FIG::rules expect, size_t line, const c
 {
     struct errorinfo * errorinfo = new struct errorinfo;
     if(GT != NULL)
-        if((rules)GT->root().site == expect)
+        if((sheet::FIG::rules)GT->root().site == expect)
             return;
     errorinfo->line = line;
     errorinfo->msg = msg;
-    errorinfo->symbol = sheet::FIG::RulesName[(rules)GT->root().site];
+    errorinfo->symbol = sheet::FIG::RulesName[(sheet::FIG::rules)GT->root().site];
     throw errorinfo;
 }
 
