@@ -300,11 +300,13 @@ int FIL::GroupGet(int accept)
 
 }
 
+namespace sheet
+{
 const size_t FIG::StateCount = 22;
 const size_t FIG::NonTerminalCount = 8;
 const size_t FIG::TerminalCount = 23;
 const size_t FIG::RulesCount = 12;
-const int FIG::GOTO[22][8] = { \ 
+const int FIG::GOTO[22][8] = { \
 {1, 6, 10, 14, 18, 1, 1, 1}, \
 {1, 1, 86, 14, 18, 1, 1, 1}, \
 {1, 1, 1, 1, 1, 1, 1, 1}, \
@@ -328,7 +330,7 @@ const int FIG::GOTO[22][8] = { \
 {1, 1, 1, 1, 1, 1, 1, 1}, \
 {1, 1, 1, 1, 1, 1, 1, 1}};
 //==============================
-const int FIG::ACTION[22][24] = { \ 
+const int FIG::ACTION[22][24] = { \
 {5, 22, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}, \
 {0, 22, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, \
 {7, 7, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, \
@@ -352,7 +354,7 @@ const int FIG::ACTION[22][24] = { \
 {39, 39, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 70, 39, 1}, \
 {11, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
 //==============================
-const int FIG::RulesToSymbol[12] = { \ 
+const int FIG::RulesToSymbol[12] = { \
 0,\
 1,\
 1,\
@@ -366,7 +368,7 @@ const int FIG::RulesToSymbol[12] = { \
 7,\
 7};
 //==============================
-const int FIG::RulesLength[12] = { \ 
+const int FIG::RulesLength[12] = { \
 1,\
 1,\
 2,\
@@ -380,7 +382,7 @@ const int FIG::RulesLength[12] = { \
 1,\
 3};
 //==============================
-const char* const FIG::RulesName[12] = { \ 
+const char* const FIG::RulesName[12] = { \
 "all->FIS ",\
 "FIS->FI ",\
 "FIS->FIS FI ",\
@@ -394,7 +396,7 @@ const char* const FIG::RulesName[12] = { \
 "ITEM->TOKEN ",\
 "ITEM->ITEM multi TOKEN "};
 //==============================
-const int FIG::Implicit[12] = { \ 
+const int FIG::Implicit[12] = { \
 0, \
 0, \
 0, \
