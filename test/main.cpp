@@ -19,7 +19,14 @@ int main(int argc, char* argv[])
         outputPath = argv[2];
     }
 
-    int error = dict.build(parameterPath);
+    FILE*fp = fopen(parameterPath, "r");
+    if (fp == nullptr) {
+        printf("Error when opening parameter file: %s\n", parameterPath);
+        return 1123123;
+    }
+
+    int error = dict.build(fp);
+    fclose(fp);
     dict.print(stdout);
     if (error != 0) {
         printf("Error when reading parameter file: %s, error: %d\n", parameterPath, error);
