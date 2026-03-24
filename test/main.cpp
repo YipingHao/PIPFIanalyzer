@@ -124,8 +124,8 @@ int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
     const char * DataFileName = dict.search("./data/origin.txt","DataFileName");
     printf("DataFileName: %s\n", DataFileName);
 
-    FILE*fp = fopen(DataFileName, "r");
-    if (fp == NULL) {
+    FILE*inputMat = fopen(DataFileName, "r");
+    if (inputMat == NULL) {
         printf("Error when opening data file: %s\n", DataFileName);
         return 1234234;
     }
