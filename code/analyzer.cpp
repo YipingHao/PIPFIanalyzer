@@ -112,7 +112,8 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
 void FIexpress::demo(FILE*fp) const
 {
     fprintf(fp, "FIexpress: order=%d, ItemCount=%zu, polynomial:", order, ItemCount);
-    for (size_t i = 0; i < ItemCount; ++i) {
+    for (size_t i = 0; i < ItemCount; ++i) 
+    {
             fprintf(fp, "  ");
             for (int j = 0; j < order; ++j) {
                 size_t varIndex = items[i * order + j];
@@ -126,6 +127,7 @@ void FIexpress::demo(FILE*fp) const
             }
             else
                 fprintf(fp, ";\n");
+    }
     fflush(fp);
 }
 
