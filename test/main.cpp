@@ -55,7 +55,11 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
     bool FortranCodePrint = dict.search(false,"FortranCodePrint");
     const char * OutputFileName = dict.search("output","OutputFileName");
 
-    hyperlex::FilePath OutputFilePath(OutputFileName);
+    hyperlex::FilePath OutputFilePath;
+    OutputFilePath.build(OutputFileName);
+    OutputFilePath += ".txt";
+    OutputFilePath += ".c";
+    OutputFilePath += ".f90";
     // 生成C代码
     if (CcodePrint) {
         char cFilePath[256];
@@ -87,11 +91,11 @@ void static CodeGeneration(hyperlex::dictionary&dict, const char* outputPath, an
 
 int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
 {
-    const char * DataFileName = dict.search("./data/origin.txt","DataFileName");
-    printf("DataFileName: %s\n", DataFileName);
-    FILE*fp = fopen(DataFileName, "r");
+    const char * PIPFileName = dict.search("./data/origin.txt","PIPFileName");
+    printf("PIPFileName: %s\n", PIPFileName);
+    FILE*fp = fopen(PIPFileName, "r");
     if (fp == NULL) {
-        printf("Error when opening data file: %s\n", DataFileName);
+        printf("Error when opening data file: %s\n", PIPFileName);
         return 1123;
     }
     analyzer::FIexpresses expressions;
