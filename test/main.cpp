@@ -107,7 +107,7 @@ int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
     int error = expressions.build(fp);
     fclose(fp);
     if (error != 0) {
-        printf("Error when reading data file: %s, error: %d\n", DataFileName, error);
+        printf("Error when reading data file: %s, error: %d\n", PIPFileName, error);
         return error;
     }
     else {
