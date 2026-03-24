@@ -100,24 +100,38 @@ int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath)
     printf("PIPFileName: %s\n", PIPFileName);
     FILE*fp = fopen(PIPFileName, "r");
     if (fp == NULL) {
-        printf("Error when opening data file: %s\n", PIPFileName);
+        printf("Error when opening PIP file: %s\n", PIPFileName);
         return 1123;
     }
     analyzer::FIexpresses expressions;
     int error = expressions.build(fp);
     fclose(fp);
     if (error != 0) {
-        printf("Error when reading data file: %s, error: %d\n", PIPFileName, error);
+        printf("Error when reading PIP file: %s, error: %d\n", PIPFileName, error);
         return error;
     }
     else {
-        printf("read data file end:\n");
+        printf("read PIP file end:\n");
     }
 
     expressions.demo(stdout);
 
     CodeGeneration(dict, outputPath, expressions);
 
+    long int threadCount = dict.search((long int)1, "threadCount");
+    printf("threadCount: %ld\n", threadCount);
+
+    const char * DataFileName = dict.search("./data/origin.txt","DataFileName");
+    printf("DataFileName: %s\n", DataFileName);
+
+    FILE*fp = fopen(DataFileName, "r");
+    if (fp == NULL) {
+        printf("Error when opening data file: %s\n", DataFileName);
+        return 1234234;
+    }
+
+
+    
     return 0;
 }
 

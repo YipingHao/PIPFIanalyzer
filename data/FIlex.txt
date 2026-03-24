@@ -5,11 +5,20 @@ lexical:{
 		num: [0-9];
 		hexa: [0-9]|[a-f]|[A-F];
 		octa: [0-7];
+		sign: ('-'|'+')?;
 	}
 	identifier: identifier(+1): ([a-z]|[A-Z]|_)<idC>*;
 	const:
 	{
-		integer: ('+' | '-')? <num>+;
+		 integer(+3): <sign><num>+;
+        // 核心部分涵盖了三种情况：
+        // 1. <num>+ '.' <num>*       -> 带整数部分，带小数点 (如 1.23, 1.)
+        // 2. '.' <num>+              -> 无整数部分，带小数点 (如 .5, .23)
+        // 3. <num>+ (e|E)<integer>   -> 无小数点，必须有指数 (如 3E5)
+        real(+1):  <sign> ( 
+                    ( <num>+ '.' <num>* | '.' <num>+ ) ((e|E)<integer>)? 
+                    | <num>+ (e|E)<integer> 
+                   );
 		CommonChar: '\''(
 			'\\'(     (<octa><octa>?<octa>?) | (x|X)<hexa><hexa>?
 				|     (v|t|r|n|f|b|a|'\\'|'?'|'\''|'\"'|['\0'])   

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ��ӡ������Ϣ
+# 显示帮助信息
 usage() {
   echo "Usage: $0 [-g] [-o <0|1|2|3>] [-c] [-C] [-h]"
   echo ""
@@ -13,13 +13,13 @@ usage() {
   exit 0
 }
 
-# Ĭ�ϲ���
+# 默认配置
 OPTIMIZATION="-O2"
 CLEAN=no
 ONLY_CLEAN=no
 DEBUG=no
 
-# ���������в���
+# 解析命令行参数
 while getopts "gco:Ch" opt; do
   case $opt in
     g)
@@ -49,7 +49,7 @@ while getopts "gco:Ch" opt; do
   esac
 done
 
-# ���ָ���� -C����ֻ clean ���˳�
+# 如果指定了 -C 则只执行 clean 并退出
 if [[ "$ONLY_CLEAN" == "yes" ]]; then
   cd "$(dirname "$0")/tools/" || { echo "Failed to enter tools directory"; exit 1; }
   make clean
@@ -57,7 +57,7 @@ if [[ "$ONLY_CLEAN" == "yes" ]]; then
   exit 0
 fi
 
-# ���ͬʱָ�� -g �� -o����ϲ�ʹ��
+# 处理同时指定 -g 和 -o 时的组合使用
 if [[ "$DEBUG" == "yes" && "$OPTIMIZATION" != "-O0" ]]; then
   MAKE_OPTION="$OPTIMIZATION -g"
 elif [[ "$DEBUG" == "yes" ]]; then
@@ -68,12 +68,12 @@ fi
 
 cd "$(dirname "$0")/tools/" || { echo "Failed to enter tools directory"; exit 1; }
 
-# ִ�������������Ҫ��
+# 执行清理（如果需要）
 if [[ "$CLEAN" == "yes" ]]; then
   make clean
 fi
 
-# ִ�б���
+# 执行编译
 if [[ -n "$MAKE_OPTION" ]]; then
   make OPTION="$MAKE_OPTION"
   make test.exe OPTION="$MAKE_OPTION"
