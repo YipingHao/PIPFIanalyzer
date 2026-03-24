@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     }
 
     FILE*fp = fopen(parameterPath, "r");
-    if (fp == nullptr) {
+    if (fp == NULL) {
         printf("Error when opening parameter file: %s\n", parameterPath);
         return 1123123;
     }
