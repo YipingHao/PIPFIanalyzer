@@ -6,7 +6,7 @@ lexical:{
 		hexa: [0-9]|[a-f]|[A-F];
 		octa: [0-7];
 	}
-	identifier: identifier(+1): ([a-z]|[A-Z]|_)<idC>+;
+	identifier: identifier(+1): ([a-z]|[A-Z]|_)<idC>*;
 	const:
 	{
 		integer: ('+' | '-')? <num>+;
@@ -16,7 +16,7 @@ lexical:{
 				)
 			|([' '-'!']|['#'-'&']|['('-'/']|['0'-'[']|[']'-'~'])
 			)'\'';
-		idChar: <idC>; 
+		//idChar: <idC>; 
 	};
 	format:
 	{
@@ -47,7 +47,7 @@ lexical:{
     }
     anntation:
 	{
-		anntationS: '/''/'(['\0'-'\11']|['\13'-'\177'])*'\n';
+		anntationS: '/''/'(['\0'-'\11']|['\13'-'\177'])*;
 		anntationM: '/''*'('/'|<AC>|'*'+<AC>)*'*'+'/';
 	}
 	operation:
