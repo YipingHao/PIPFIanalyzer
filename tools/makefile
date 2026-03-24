@@ -54,7 +54,7 @@ test.exe: $(COFILE) $(TestOFile)
 $(TEST)test.o: $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h $(TEST)test.cpp
 	$(CC) -o $(TEST)test.o -c $(CFLAGS) $(TEST)test.cpp
 
-$(TEST)main.o: $(CODE)FIanalyzer.h $(TEST)main.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
+$(TEST)main.o: $(TEST)main.cpp $(CODE)analyzer.h $(CODE)sheet.h $(CODE)automata.h $(CODE)dictionary.h $(CODE)template.h
 	$(CC) -o $(TEST)main.o -c $(CFLAGS) $(TEST)main.cpp
 
 #$(ODIR)FIanalyzer.o:$(CODE)FIanalyzer.cpp $(CODE)FIanalyzer.h
