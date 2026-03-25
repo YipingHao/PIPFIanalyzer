@@ -137,7 +137,7 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
     }
 
     int row, col;
-    vector<double> matrix;
+    analyzer::vector<double> matrix;
     error = analyzer::ParserDataMatrix(inputMat, matrix, row, col);
     fclose(inputMat);
     if (error != 0) {
@@ -169,7 +169,7 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
     size_t ldo = hasEnergy ? (outputCols + 1) : outputCols; // 输出矩阵的领先维度
 
     // 分配输出矩阵
-    vector<double> outputMatrix;
+    analyzer::vector<double> outputMatrix;
     outputMatrix.resize(row * ldo);
     // 准备输入和输出参数
     const double* inputData = matrix.ptr();
