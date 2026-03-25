@@ -136,7 +136,7 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
         return 1234234;
     }
 
-    int row, col;
+    size_t row, col;
     analyzer::vector<double> matrix;
     int error = analyzer::ParserDataMatrix(inputMat, matrix, row, col);
     fclose(inputMat);
@@ -148,12 +148,13 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
     printf("row: %d, col: %d\n", row, col);
 
     bool hasEnergy;
-    if(expressions.XCount + 1 == col)
+    size_t xCount = expressions.getXCount();
+    if(xCount + 1 == col)
     {
         hasEnergy = true;
      
     }
-    else if(expressions.XCount == col)
+    else if(xCount == col)
     {
         hasEnergy = false;
     }
