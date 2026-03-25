@@ -138,7 +138,7 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
 
     int row, col;
     analyzer::vector<double> matrix;
-    error = analyzer::ParserDataMatrix(inputMat, matrix, row, col);
+    int error = analyzer::ParserDataMatrix(inputMat, matrix, row, col);
     fclose(inputMat);
     if (error != 0) {
         printf("Error when parsing data file: %s, error: %d\n", DataFileName, error);
