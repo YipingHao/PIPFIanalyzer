@@ -226,10 +226,24 @@ make test.exe
 - `PIPFileName`：PIP表达式文件路径
 - `DataFileName`：键长坐标-能量数据点文件
 
+**输入数据格式要求**：
+- 每行包含相同数量的数值（浮点数或整数）
+- 数值之间用空格分隔
+- 支持空行（会被自动忽略）
+- 支持注释（以`//`或`/* */`开始的行）
+- 数据格式有两种：
+  1. 仅包含键长坐标：每行有`XCount`个数值
+  2. 包含键长坐标和能量值：每行有`XCount + 1`个数值，最后一个数值为能量值
+
 **输出文件**：
 - `<OutputFileName>.txt`：转换后的数据文件
 - `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
 - `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
+
+**输出数据格式**：
+- 每行包含`N + (E)`个数值，其中`N`是PIP多项式的数量，`E`是能量值（如果输入包含能量）
+- 数值使用科学计数法格式：`%25.16E`
+
 
 **如何启用代码生成**：
 - 在参数文件中设置`CcodePrint = true`启用C代码生成
