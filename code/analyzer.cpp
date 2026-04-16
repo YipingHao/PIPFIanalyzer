@@ -182,3 +182,76 @@ void errorinfo::demo(FILE*fp) const
     fprintf(fp, "line %d, %s, expect %s\n", line, msg, symbol);
     fflush(fp);
 }
+
+void FIexpresses::SortByOrder(void)
+{
+    // 使用简单的冒泡排序对items进行排序，按照order从小到大
+    for (size_t i = 0; i < items.count(); ++i) {
+        for (size_t j = 0; j < items.count() - 1 - i; ++j) {
+            if (items[j].getOrder() > items[j + 1].getOrder()) {
+                // 交换items[j]和items[j + 1]
+                FIexpress temp;
+                temp.move(items[j]);
+                items[j].move(items[j + 1]);
+                items[j + 1].move(temp);
+            }
+        }
+    }
+}
+void FIexpresses::analyze(void)
+{
+    // 该函数的目的是通过一阶不变量来划分 N 阶多项式。
+    // partions[i][k] 记录了第 i 个多项式的某个代表性单项式中，
+    // 包含了多少个属于第 k 个一阶多项式的自变量。
+    
+    SortByOrder();
+    Order1Count = 0;
+    
+    for (size_t i = 0; i < items.count(); i++)
+    {
+        const FIexpress& expre = items[i];
+        if(expre.getOrder() == 1)
+        {
+            Order1Count++;
+        }
+    }
+
+    for (size_t i = 0; i < items.count(); i++)
+    {
+        vector<size_t> partion;
+        const FIexpress& expre = items[i];
+        size_t order = expre.getOrder();
+        
+        // 利用置换不变性：一阶不变量的 N 阶单项式构成了 N 阶不变量多项式的一个划分。
+        // 因此，只需要检查该多项式的任何一个单项式（这里用了第一个单项式，即前 order 个变量），
+        // 就可以计算出它属于哪个一阶不变量单项式的划分。
+        
+        partion.recount(Order1Count);
+        partion.value(0);
+
+        for (size_t j = 0; j < order; j++)
+        {
+            for (size_t k = 0; k < Order1Count; k++)
+            {
+                const FIexpress& Order1now_ = items[k];
+                size_t site = Order1now_.items.search(expre.items[j]);
+                if(site != (size_t)(-1))
+                {
+                    partion[k]++;
+                    break;
+                }
+            }
+        }
+        partions.append(partion);
+    }
+}
+
+
+
+
+
+
+
+
+
+

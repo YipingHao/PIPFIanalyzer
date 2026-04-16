@@ -22,6 +22,7 @@ namespace analyzer
                 return *this;
             }
             void move(FIexpress& src);
+            friend class FIexpresses;
         protected:
             int order;//齐次多项式的次数
             size_t ItemCount;//单项式项数
@@ -102,7 +103,19 @@ namespace analyzer
             int highestOrder;//最高次数
             vector<size_t> OrderCount;//次数i的多项式数量
             size_t XCount;//变量数量
-
+            size_t Order1Count;//次数为1的多项式数量，
+            /*
+            一阶不变量构成了对全体键长的划分。
+            */
+            /*
+            partions数组存储了按照一阶不变量对所有多项式进行的划分。
+            由于置换不变性，一阶不变量的N阶单项式构成了N阶不变量多项式的一个划分。
+            - partions.size() == items.size()，对应于每个不变量多项式。
+            - partions[i] 的大小为 Order1Count（一阶多项式的个数）。
+            - partions[i][k] 表示第 i 个多项式的代表单项式（如第一个单项式）中，
+              包含第 k 个一阶多项式的自变量的次数（个数）。
+            */
+            vector<vector<size_t>> partions;
         public:
             const vector<FIexpress>& getItems() const { return items; }
             void setItems(const vector<FIexpress>& items) { this->items = items; }
@@ -110,7 +123,9 @@ namespace analyzer
             const vector<size_t>& getOrderCount() const { return OrderCount; }
 
             size_t getXCount() const { return XCount; }
-
+        protected:
+            void SortByOrder(void);
+            void analyze(void);
         public:
             int compute(const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;
             int compute(unsigned int threadCount, const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;
