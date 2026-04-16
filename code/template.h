@@ -433,6 +433,11 @@ namespace TemplateSelf
 			append(element);
 			return Count - 1;
 		}
+		size_t search(const T& element) const {
+			for (size_t i = 0; i < Count; ++i)
+				if (content[i] == element) return i;
+			return (size_t)(-1);
+		}
 		size_t pop(T& element) {
 			if (Count == 0) return 0;
 			Count -= 1;
