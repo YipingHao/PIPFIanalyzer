@@ -7,7 +7,7 @@
 ```
 MIT License
 
-Copyright (c) 2025 郝一平
+Copyright (c) 2025 郝一平 娄敬
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -67,23 +67,56 @@ PIP 和 FI 是密切相关的概念：
 
 ## 安装教程
 
-本软件使用C++编写，需要g++编译器进行编译安装。
+本软件使用C++编写。Linux/Unix环境使用g++编译，Windows环境使用MSVC工具链编译。
 
 ### 环境要求
 
-- **编译器**：g++ (支持C++03标准)
-- **操作系统**：Linux/Unix系统
-- **线程支持**：pthread库（多线程计算需要）
+- **Linux/Unix**：g++ (支持C++03标准)
+- **Windows**：MSVC（cl.exe、link.exe、nmake）
+- **线程支持**：pthread库（并行后端启用时需要）
+
+### Windows 编译（MSVC）
+
+在Windows下请使用 Visual Studio Developer Command Prompt 执行构建命令。
+
+推荐步骤：
+
+```cmd
+cd /d d:\projs\FIanalyzer
+nmake /nologo /f tools\Makefile.msvc
+test\main.exe parameter\input.txt .\output\
+```
+
+清理编译产物：
+
+```cmd
+nmake /nologo /f tools\Makefile.msvc clean
+```
+
+也可直接运行一键脚本：
+
+```cmd
+build_run_test.bat
+```
+
+注意：如果提示找不到 `nmake` 或 `cl.exe`，说明当前不是 Developer Command Prompt 环境。
 
 ### 编译步骤
 
 1. **克隆或下载源代码**
-   目前仅仅在gitee上有开源链接
+   目前在gitee和github上有开源连接
    ```bash
    cd /path/to/your/workspace
    git clone https://gitee.com/hao-yiping/FIanalyzer.git
    cd FIanalyzer
    ```
+
+   ```bash
+   cd /path/to/your/workspace
+   git clone https://github.com/YipingHao/PIPFIanalyzer.git
+   cd PIPFIanalyzer
+   ```
+
 
 2. **运行安装脚本**
    ```bash
@@ -137,10 +170,11 @@ make test.exe
 
 - **编译错误**：确保g++版本支持C++03标准
 - **链接错误**：检查pthread库是否已安装（Linux系统通常默认安装）
+- **Windows工具缺失**：请确认在 Developer Command Prompt 中运行，且 `nmake`、`cl.exe` 可用
 
 ## 使用说明
 
-本软件提供两种主要功能：将PIP文本转换为可执行代码，以及将笛卡尔坐标数据转换为PIP多项式数据。
+本软件支持以下运行模式：`dataswitch`、`CodeGeneration`、`cutoff`、`SFI`、`test`。
 
 ### 基本运行方式
 
@@ -164,13 +198,38 @@ make test.exe
 
 ```json
 {
-    PIPFileName = "./data/O4.txt";      // PIP表达式文件路径
-    DataFileName = "./data/vain.txt";      // 键长坐标-能量数据点文件
-    OutputFileName = "L";                 // 输出文件前缀（会自动添加.txt/.c/.f后缀）
-    threadCount = 32;                     // 线程数量（仅用于数据转换模式）
-    item = "dataswitch";                  // 运行模式："dataswitch"（主要功能）或"test"（开发测试）
-    CcodePrint = true;                    // 是否生成C代码（附加功能）
-    FortranCodePrint = true;              // 是否生成Fortran代码（附加功能）
+  PIPFileName = "./data/CH4.txt";          // PIP表达式文件路径
+  DataFileName = "./data/vain.txt";        // 数据文件路径（仅dataswitch需要）
+  OutputFileName = "L-CH4";                // 输出文件前缀（会自动添加.txt/.c/.f90后缀）
+  threadCount = 32;                         // 线程参数（仅dataswitch入口使用）
+
+  item = "cutoff";                         // 运行模式：test/dataswitch/CodeGeneration/cutoff/SFI
+
+  CodeGenSetting =
+  {
+    CcodePrint = true;
+    FortranCodePrint = true;
+  };
+
+  CutoffSetting =
+  {
+    threshold = "workload";              // order 或 workload
+    order = 5;
+    workload = 1000;
+    CrossItem = true;
+  };
+
+  SFI =
+  {
+    order = 2;
+    poly = 12;
+    reciprocal = 12;
+    exp = 12;
+    gaussian = 12;
+    cos = 12;
+    sin = 12;
+  };
+
     TestItem = {
         item = 3;                         // 测试项编号（仅用于test模式）
     };
@@ -207,6 +266,7 @@ make test.exe
 - 参数项的键名必须是唯一的，不能重复。
 - 参数项的值可以是字符串、整数、浮点数、布尔值。
 - 布尔值必须是`true`或`false`，不能是其他字符串。
+- 分组参数使用点路径访问，例如`CodeGenSetting.CcodePrint`、`CutoffSetting.threshold`。
 
 
 
@@ -214,7 +274,7 @@ make test.exe
 
 #### 数据转换模式（item = "dataswitch"）
 
-这是软件的主要功能，用于将键长坐标-能量数据点转换为PIP多项式数据。也可在完成功能时顺便将PIP表达式转换为C语言代码或者Fortran语言代码：
+这是软件的主要功能，用于将键长坐标-能量数据点转换为PIP多项式数据。
 
 ```bash
 ./run.sh -i ./parameter/input.txt -o ./output/
@@ -234,25 +294,72 @@ make test.exe
 - 数据格式有两种：
   1. 仅包含键长坐标：每行有`XCount`个数值
   2. 包含键长坐标和能量值：每行有`XCount + 1`个数值，最后一个数值为能量值
+  3. 其他列数会报错并退出
+- 其中`XCount`由PIP表达式中出现的最大变量下标加1自动推导得到
 
 **输出文件**：
 - `<OutputFileName>.txt`：转换后的数据文件
-- `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
-- `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
 
 **输出数据格式**：
 - 每行包含`N + (E)`个数值，其中`N`是PIP多项式的数量，`E`是能量值（如果输入包含能量）
+- 如果输入包含能量列，输出最后一列保留原始能量值
 - 数值使用科学计数法格式：`%25.16E`
-
-
-**如何启用代码生成**：
-- 在参数文件中设置`CcodePrint = true`启用C代码生成
-- 在参数文件中设置`FortranCodePrint = true`启用Fortran代码生成
-- 两个选项可以同时启用
+- 返回码约定：`0`成功，`-1`输入输出行数不匹配，`-3`输入列数与`XCount`不一致，`-4`输出列数与多项式数量不一致
 
 **注意**：
-- 多线程功能仅用于数据转换模式
-- 代码生成是数据转换的附加功能
+- 多线程接口仅在数据转换模式入口使用
+- 代码生成功能请使用下方 `CodeGeneration` 独立模式
+
+#### 代码生成模式（item = "CodeGeneration"）
+
+此模式用于将PIP表达式直接转换为C或Fortran代码，不进行数据矩阵转换。
+
+**如何启用本模式**：
+- 在参数文件中设置`item = "CodeGeneration"`
+
+**输入文件**：
+- `PIPFileName`：PIP表达式文件路径
+
+**输出文件**：
+- `<OutputFileName>.c`：生成的C语言代码（如果`CodeGenSetting.CcodePrint = true`）
+- `<OutputFileName>.f90`：生成的Fortran语言代码（如果`CodeGenSetting.FortranCodePrint = true`）
+
+**说明**：
+- 此模式不依赖`DataFileName`
+- `threadCount`对该模式无实际影响
+
+#### 多项式截断模式（item = "cutoff"）
+
+此模式用于对输入的PIP表达式集合做筛选截断，生成较小规模的表达式文件。
+
+**如何启用本模式**：
+- 在参数文件中设置`item = "cutoff"`
+
+**输入文件**：
+- `PIPFileName`：PIP表达式文件路径
+
+**截断参数（CutoffSetting）**：
+- `threshold`：可选`"order"`或`"workload"`
+- `order`：当`threshold`为`"order"`时生效，表示最大保留次数
+- `workload`：当`threshold`为`"workload"`时生效，表示最大保留工作量
+- 当前实现中，`workload`按多项式复杂度累加估算，单项复杂度为`order × itemCount`
+- `CrossItem`：是否启用交叉项过滤
+- 当前判定逻辑会检查代表单项式中是否存在重复变量索引，若有重复则该项被视为非`CrossItem`
+
+**输出文件**：
+- `<OutputFileName>.txt`：截断后的多项式表达式文本（保持`P[i] = ...`原格式）
+
+**说明**：
+- 该模式不进行数据矩阵转换
+- 该模式当前不执行代码生成
+- `cutoff`会触发次数分布与划分信息重建，输出表达式顺序可能与输入顺序不同
+
+#### 基本不变量模式（item = "SFI"）
+
+该模式当前为预留入口，尚未实现具体功能。
+参数文件中的`SFI`配置段会被读取，但当前版本不会产出实质计算结果。
+
+
 
 #### 测试模式（item = "test"）
 
@@ -262,7 +369,7 @@ make test.exe
 ./run.sh -i ./parameter/input.txt -o ./output/
 ```
 
-普通用户无需使用此模式。
+该模式用于内部测试入口，普通用户一般无需使用。
 
 ### PIP表达式文件格式
 
@@ -284,15 +391,17 @@ P[2] = r[0] * r[5] + r[1] * r[4] + r[2] * r[3];
 
 ### 多线程计算
 
-软件在数据转换模式下支持多线程计算以提高性能。在参数文件中设置`threadCount`参数：
+`threadCount`参数在数据转换模式入口中可配置。
+当前版本为保证结果一致性，带线程参数的计算接口回退到单线程计算路径。
+因此该参数目前主要用于接口兼容和后续并行后端扩展。
 
 ```json
-threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
+threadCount = 32;  // 当前版本下会走确定性单线程计算路径
 ```
 
 ### 使用示例
 
-**数据转换（带代码生成）**
+**数据转换**
 
 1. 准备PIP表达式文件`my_pip.txt`和键长坐标-能量数据点文件
 2. 创建参数文件`my_input.txt`：
@@ -302,9 +411,7 @@ threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
        DataFileName = "./data/O4.txt";
        OutputFileName = "my_output";
        threadCount = 16;  // 使用16个线程进行数据转换
-       item = "dataswitch";  // 使用主要功能模式
-       CcodePrint = true;  // 同时生成C代码
-       FortranCodePrint = false;  // 不生成Fortran代码
+       item = "dataswitch";  // 数据转换模式
    }
    ```
 3. 运行程序：
@@ -313,7 +420,29 @@ threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
    ```
 4. 输出文件：
    - `./my_output/my_output.txt`：转换后的数据文件
-   - `./my_output/my_output.c`：生成的C语言代码
+
+**代码生成（独立模式）**
+
+1. 准备PIP表达式文件`my_pip.txt`
+2. 创建参数文件`my_codegen.txt`：
+  ```json
+  {
+     PIPFileName = "./data/my_pip.txt";
+     OutputFileName = "my_codegen";
+     item = "CodeGeneration";
+     CodeGenSetting = {
+        CcodePrint = true;
+        FortranCodePrint = true;
+     };
+  }
+  ```
+3. 运行程序：
+  ```bash
+  ./run.sh -I my_codegen.txt -o ./my_output/
+  ```
+4. 输出文件：
+  - `./my_output/my_codegen.c`：生成的C语言代码
+  - `./my_output/my_codegen.f90`：生成的Fortran语言代码
 
 ### 调试模式
 
@@ -333,8 +462,13 @@ threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
 
 - **数据转换模式**：
   - `<OutputFileName>.txt`：转换后的数据文件
-  - `<OutputFileName>.c`：生成的C语言代码（如果`CcodePrint = true`）
-  - `<OutputFileName>.f`：生成的Fortran语言代码（如果`FortranCodePrint = true`）
+
+- **代码生成模式**：
+  - `<OutputFileName>.c`：生成的C语言代码（如果`CodeGenSetting.CcodePrint = true`）
+  - `<OutputFileName>.f90`：生成的Fortran语言代码（如果`CodeGenSetting.FortranCodePrint = true`）
+
+- **多项式截断模式**：
+  - `<OutputFileName>.txt`：截断后的PIP表达式文本
 
 - **测试模式**：
   - 测试输出文件（仅开发人员使用）
@@ -345,7 +479,7 @@ threadCount = 32;  // 使用32个线程（仅用于数据转换模式）
 2. 字符串值需要用双引号括起来
 3. 确保输入文件路径正确
 4. 输出目录如果不存在会自动创建
-5. 多线程计算时，线程数应根据CPU核心数合理设置
+5. 当前版本中`threadCount`主要用于接口兼容和后续并行后端扩展，不直接代表实际并行线程数
 
 ## 软件架构
 
@@ -399,6 +533,9 @@ FIanalyzer/
   - 提供`compute()`方法进行批量数据转换
   - 提供`build()`方法从文件构建多项式表达式
   - 提供`printCcode()`和`printFortrancode()`方法生成代码
+  - 提供`cutoffByOrder()`和`cutoffByWorkload()`方法用于特征截断
+  - 提供`print()`方法导出原始PIP文本格式
+  - 提供`CrossItem`分析与一阶划分信息重建能力
 
 **数据结构**：
 ```
@@ -443,9 +580,11 @@ PIP文本 → 词法分析 → 语法分析 → 抽象语法树 → FIexpress对
 提供多线程数据转换功能，提高大规模数据处理的效率。
 
 **主要功能**：
-- 支持多线程并行计算
-- 自动分配任务给各个线程
-- 使用pthread库实现线程管理
+- 保留多线程计算接口与任务拆分逻辑
+- 在默认构建路径下，线程参数接口用于兼容入口
+- 当前计算主路径以确定性结果为优先，可回退到单线程计算
+
+以下策略为并行后端启用时的分配逻辑说明。
 
 **线程分配策略**：
 ```
@@ -540,7 +679,7 @@ PIP表达式文件                      键长坐标-能量数据点文件
 │                                       │
 主要功能：数据转换（多线程）        附加功能：代码生成
 │                                       │
-转换后的数据文件（.txt）           C/Fortran代码文件（.c/.f）
+转换后的数据文件（.txt）           C/Fortran代码文件（.c/.f90）
 ```
 
 ### 线程模型

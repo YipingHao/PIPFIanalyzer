@@ -5,18 +5,44 @@
 //         Keys are crucial too, don't change the former keys of the input values.
 //=======================================================================================================
 {
-	PIPFileName = "./data/O4.txt";
+	PIPFileName = "../data/CH4.txt";
     DataFileName = "./data/vain.txt";
-	OutputFileName = "L";//Prefix is only needed
+	OutputFileName = "L-CH4";//Prefix is only needed
 
     threadCount = 32;
 
 	//item = "test";
-    item = "dataswitch";
-    CcodePrint = true; 
-	//CcodePrint = false;
-    FortranCodePrint = true;
-	//FortranCodePrint = false;
+    //item = "dataswitch";
+	//item = "CodeGeneration";
+	item = "cutoff";
+	//item = "SFI";
+
+	CodeGenSetting =
+	{
+		CcodePrint = true; 
+		//CcodePrint = false;
+    	FortranCodePrint = true;
+		//FortranCodePrint = false;
+	};
+    
+	CutoffSetting = 
+	{
+		//threshold = "order";
+		threshold = "workload";
+		order = 5;
+		workload = 1000;
+		CrossItem = true;
+	};
+	SFI = 
+	{
+		order = 2;
+		poly = 12;
+		reciprocal = 12;
+		exp = 12;
+		gaussian = 12;
+		cos = 12;
+		sin = 12;
+	};
 	TestItem = 
 	{
 		item = 3;

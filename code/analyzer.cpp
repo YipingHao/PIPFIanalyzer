@@ -109,6 +109,14 @@ int FIexpresses::compute(const double*input, size_t ldi, size_t rowi, size_t col
     return 0;
 }
 
+int FIexpresses::compute(unsigned int threadCount, const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const
+{
+    // Keep behavior deterministic when no threading backend is enabled.
+    // This overload is required by callers that pass a thread count.
+    (void)threadCount;
+    return compute(input, ldi, rowi, coli, output, ldo, rowo, colo);
+}
+
 void FIexpress::demo(FILE*fp) const
 {
     fprintf(fp, "FIexpress: order=%d, ItemCount=%zu, polynomial:\n\t", order, ItemCount);
@@ -152,17 +160,16 @@ void FIexpress::DemoSimple(FILE*fp) const
 
 void FIexpresses::demo(FILE*fp) const
 {
-    fprintf(fp, "FIexpresses: total=%zu, highestOrder=%d, XCount=%zu\n", items.size(), highestOrder, XCount);
+    fprintf(fp, "FIexpresses: total=%zu, highestOrder=%d, XCount=%zu, Order1Count=%zu\n", items.size(), highestOrder, XCount, Order1Count);
     
-    if (items.size() < 32) {
-        for (size_t i = 0; i < items.size(); ++i) {
-            fprintf(fp, "  FIexpress %zu:", i);
+    size_t accLength = 0;
+    for (size_t i = 0; i < items.size(); ++i) {
+        size_t currentLength = items[i].order * items[i].ItemCount;
+        accLength += currentLength;
+        fprintf(fp, "  FIexpress %zu (length=%zu, acc=%zu):", i, currentLength, accLength);
+        if (items[i].order == 1) {
             items[i].demo(fp);
-        }
-    } else {
-        fprintf(fp, "  Too many FIexpress objects (%zu), showing first 32 with simple info\n", items.size());
-        for (size_t i = 0; i < 32; ++i) {
-            fprintf(fp, "  FIexpress %zu:", i);
+        } else {
             items[i].DemoSimple(fp);
         }
     }
@@ -174,6 +181,21 @@ void FIexpresses::demo(FILE*fp) const
             fprintf(fp, "    Order %zu: %zu polynomials\n", i, OrderCount[i]);
         }
     }
+
+    if (partions.size() > 0) {
+        fprintf(fp, "  Partions:\n");
+        for (size_t i = 0; i < partions.size(); ++i) {
+            fprintf(fp, "    FIexpress %zu partion: [", i);
+            for (size_t j = 0; j < partions[i].size(); ++j) {
+                fprintf(fp, "%zu", partions[i][j]);
+                if (j + 1 < partions[i].size()) {
+                    fprintf(fp, ", ");
+                }
+            }
+            fprintf(fp, "]\n");
+        }
+    }
+    
     fflush(fp);
 }
 
@@ -198,6 +220,102 @@ void FIexpresses::SortByOrder(void)
         }
     }
 }
+
+void FIexpresses::cutoffByOrder(int max_order, bool enable_crossitem)
+{
+    vector<FIexpress> newItems;
+    for (size_t i = 0; i < items.count(); ++i) {
+        bool keep = true;
+        if (items[i].getOrder() > max_order) {
+            keep = false;
+        }
+
+        // Check crossitem condition
+        if (keep && enable_crossitem) {
+            if (i < CrossItem.size()) {
+                keep = CrossItem[i];
+            }
+        }
+        
+        if (keep) {
+            newItems.append(items[i]);
+        }
+    }
+    
+    // Update items
+    items.move(newItems);
+    
+    // Recalculate highestOrder and OrderCount
+    OrderAnalysis();
+    
+    // Re-analyze partions
+    analyze();
+}
+
+void FIexpresses::cutoffByWorkload(size_t max_workload, bool enable_crossitem)
+{
+    vector<FIexpress> newItems;
+    size_t accLength = 0;
+    
+    for (size_t i = 0; i < items.count(); ++i) {
+        bool keep = true;
+        size_t currentLength = items[i].getOrder() * items[i].getItemCount();
+        
+        if (accLength + currentLength > max_workload) {
+            keep = false; 
+        }
+
+        // Check crossitem condition
+        if (keep && enable_crossitem) {
+            if (i < CrossItem.size()) {
+                keep = CrossItem[i];
+            }
+        }
+        
+        if (keep) {
+            newItems.append(items[i]);
+            accLength += items[i].getOrder() * items[i].getItemCount();
+        }
+    }
+    
+    // Update items
+    items.move(newItems);
+    
+    // Recalculate highestOrder and OrderCount
+    OrderAnalysis();
+    
+    // Re-analyze partions
+    analyze();
+}
+
+void FIexpresses::CrossItemAnalysis(void)
+{
+    CrossItem.recount(items.count());
+    
+    for (size_t i = 0; i < items.count(); ++i) {
+        bool hasDuplicate = false;
+        if (items[i].getItemCount() > 0) {
+            int order = items[i].getOrder();
+            const vector<size_t>& exprItems = items[i].getItems();
+            
+            // Just check the first monomial (first `order` elements in exprItems)
+            for (int p = 0; p < order; ++p)
+            {
+                for (int q = p + 1; q < order; ++q) 
+                {
+                    if (exprItems[p] == exprItems[q]) {
+                        hasDuplicate = true;
+                        break;
+                    }
+                }
+                if (hasDuplicate) break;
+            }
+        }
+        
+        CrossItem[i] = !hasDuplicate;
+    }
+}
+
 void FIexpresses::analyze(void)
 {
     // 该函数的目的是通过一阶不变量来划分 N 阶多项式。
@@ -206,6 +324,7 @@ void FIexpresses::analyze(void)
     
     SortByOrder();
     Order1Count = 0;
+    partions.recount(0); // 清空以前的划分，以免反复追加
     
     for (size_t i = 0; i < items.count(); i++)
     {
@@ -244,6 +363,8 @@ void FIexpresses::analyze(void)
         }
         partions.append(partion);
     }
+  
+    CrossItemAnalysis();
 }
 
 
