@@ -162,3 +162,49 @@ int FIexpresses::printFortrancode(FILE* fp) const {
     
     return 0;
 }
+
+/*
+ * 将当前的所有的多项式按照原始输入文本的格式输出到文件。
+ *
+ * 功能描述:
+ * 区别于生成具体编程语言（C/Fortran）代码的函数，该函数用于数据的导出和保存。
+ * 它纯粹地生成与输入文件一致的结构化文本格式（不带多余的提示信息），
+ * 展现多项式的数学形态，如：
+ * P[2] = r[0] * r[1] + r[0] * r[2] + r[1] * r[2];
+ * 
+ * 实现原理:
+ * 1. 外层循环遍历所有的多项式 (items)，并为其加上前缀 `P[i] = `。
+ * 2. 内层循环首先遍历多项式内的每个单项式 (总量为 itemCount)。
+ * 3. 单项式内部进一步遍历其每一阶 (总量为 order)，通过 `j * order + k` 的偏移量，
+ *    定位并读取对应的变量索引（解析出它属于第几个 r）。
+ * 4. 同一单项式的各个变量用连乘符号 ` * ` 连接，不同单项式之间用加号 ` + ` 连接。
+ * 5. 每个多项式的末尾以分号和换行符 `;\n` 结束。
+ */
+void FIexpresses::print(FILE*fp) const
+{
+    if (!fp) return;
+    
+    for (size_t i = 0; i < items.size(); ++i) {
+        const FIexpress& expr = items[i];
+        int order = expr.getOrder();
+        size_t itemCount = expr.getItemCount();
+        const vector<size_t>& exprItems = expr.getItems();
+        
+        fprintf(fp, "P[%zu] = ", i);
+        
+        for (size_t j = 0; j < itemCount; ++j) {
+            for (int k = 0; k < order; ++k) {
+                size_t varIndex = exprItems[j * order + k];
+                fprintf(fp, "r[%zu]", varIndex);
+                if (k + 1 < order) {
+                    fprintf(fp, " * ");
+                }
+            }
+            if (j + 1 < itemCount) {
+                fprintf(fp, " + ");
+            }
+        }
+        fprintf(fp, ";\n");
+    }
+    fflush(fp);
+}

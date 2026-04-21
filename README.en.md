@@ -7,7 +7,7 @@ This software is open source under the MIT License.
 ```
 MIT License
 
-Copyright (c) 2025 Hao Yiping
+Copyright (c) 2025 Hao Yiping Lou Jing
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -63,22 +63,54 @@ For existing PIP text, this software can convert it into corresponding polynomia
 
 ## Installation Tutorial
 
-This software is written in C++ and requires a g++ compiler for compilation and installation.
+This software is written in C++. Linux/Unix environments use g++ for compilation, while Windows environments use the MSVC toolchain.
 
 ### Environment Requirements
 
-- **Compiler**: g++ (supports C++03 standard)
-- **Operating System**: Linux/Unix system
-- **Thread Support**: pthread library (needed for multi-threaded computing)
+- **Linux/Unix**: g++ (supports C++03 standard)
+- **Windows**: MSVC (cl.exe, link.exe, nmake)
+- **Thread Support**: pthread library (needed when parallel backend is enabled)
+
+### Windows Build (MSVC)
+
+On Windows, use Visual Studio Developer Command Prompt to run build commands.
+
+Recommended steps:
+
+```cmd
+cd /d d:\projs\FIanalyzer
+nmake /nologo /f tools\Makefile.msvc
+test\main.exe parameter\input.txt .\output\
+```
+
+Clean build artifacts:
+
+```cmd
+nmake /nologo /f tools\Makefile.msvc clean
+```
+
+You can also run the one-step script:
+
+```cmd
+build_run_test.bat
+```
+
+Note: If `nmake` or `cl.exe` is not found, you are not in Developer Command Prompt.
 
 ### Compilation Steps
 
 1. **Clone or download the source code**
-   Currently, there is only an open source link on gitee
+  Currently, open source links are available on both gitee and github
    ```bash
    cd /path/to/your/workspace
    git clone https://gitee.com/hao-yiping/FIanalyzer.git
    cd FIanalyzer
+   ```
+
+   ```bash
+   cd /path/to/your/workspace
+   git clone https://github.com/YipingHao/PIPFIanalyzer.git
+   cd PIPFIanalyzer
    ```
 
 2. **Run the installation script**
@@ -133,10 +165,11 @@ make test.exe
 
 - **Compilation errors**: Ensure that the g++ version supports the C++03 standard
 - **Linking errors**: Check if the pthread library is installed (usually installed by default on Linux systems)
+- **Windows toolchain missing**: Ensure you run in Developer Command Prompt and `nmake`/`cl.exe` are available
 
 ## Usage Instructions
 
-This software provides two main functions: converting PIP text into executable code, and converting Cartesian coordinate data into PIP polynomial data.
+This software supports the following running modes: `dataswitch`, `CodeGeneration`, `cutoff`, `SFI`, and `test`.
 
 ### Basic Running Method
 
@@ -160,13 +193,38 @@ The parameter file uses a JSON-like format, with the main configuration items as
 
 ```json
 {
-    PIPFileName = "./data/O4.txt";      // PIP expression file path
-    DataFileName = "./data/vain.txt";      // Bond length coordinate-energy data point file
-    OutputFileName = "L";                 // Output file prefix (will automatically add .txt/.c/.f suffix)
-    threadCount = 32;                     // Number of threads (only used in data conversion mode)
-    item = "dataswitch";                  // Running mode: "dataswitch" (main function) or "test" (development test)
-    CcodePrint = true;                    // Whether to generate C code (additional function)
-    FortranCodePrint = true;              // Whether to generate Fortran code (additional function)
+  PIPFileName = "./data/CH4.txt";          // PIP expression file path
+  DataFileName = "./data/vain.txt";        // Data file path (required only for dataswitch)
+  OutputFileName = "L-CH4";                // Output prefix (auto appends .txt/.c/.f90)
+  threadCount = 32;                         // Thread parameter (used at dataswitch entry)
+
+  item = "cutoff";                         // Modes: test/dataswitch/CodeGeneration/cutoff/SFI
+
+  CodeGenSetting =
+  {
+    CcodePrint = true;
+    FortranCodePrint = true;
+  };
+
+  CutoffSetting =
+  {
+    threshold = "workload";                // order or workload
+    order = 5;
+    workload = 1000;
+    CrossItem = true;
+  };
+
+  SFI =
+  {
+    order = 2;
+    poly = 12;
+    reciprocal = 12;
+    exp = 12;
+    gaussian = 12;
+    cos = 12;
+    sin = 12;
+  };
+
     TestItem = {
         item = 3;                         // Test item number (only used in test mode)
     };
@@ -203,12 +261,13 @@ During runtime, the setting `CcodePrint = false` is commented out and will not g
 - Parameter item keys must be unique and cannot be repeated.
 - Parameter item values can be strings, integers, floating-point numbers, or boolean values.
 - Boolean values must be `true` or `false`, not other strings.
+- Grouped parameters are accessed by dotted paths, e.g. `CodeGenSetting.CcodePrint` and `CutoffSetting.threshold`.
 
 ### Running Modes
 
 #### Data Conversion Mode (item = "dataswitch")
 
-This is the main function of the software, used to convert bond length coordinate-energy data points into PIP polynomial data. It can also convert PIP expressions into C language code or Fortran language code as a side function:
+This is the core mode of the software, used to convert bond length coordinate-energy data points into PIP polynomial data:
 
 ```bash
 ./run.sh -i ./parameter/input.txt -o ./output/
@@ -228,24 +287,70 @@ This is the main function of the software, used to convert bond length coordinat
 - There are two data formats:
   1. Only contains bond length coordinates: each line has `XCount` values
   2. Contains bond length coordinates and energy values: each line has `XCount + 1` values, with the last value being the energy value
+  3. Any other column count is treated as an error
+- `XCount` is inferred automatically as (maximum variable index in PIP expressions) + 1
 
 **Output files**:
 - `<OutputFileName>.txt`: Converted data file
-- `<OutputFileName>.c`: Generated C language code (if `CcodePrint = true`)
-- `<OutputFileName>.f`: Generated Fortran language code (if `FortranCodePrint = true`)
 
 **Output data format**:
 - Each line contains `N + (E)` values, where `N` is the number of PIP polynomials, and `E` is the energy value (if input includes energy)
+- If the input contains an energy column, the last output column keeps the original energy value
 - Values use scientific notation format: `%25.16E`
-
-**How to enable code generation**:
-- Set `CcodePrint = true` in the parameter file to enable C code generation
-- Set `FortranCodePrint = true` in the parameter file to enable Fortran code generation
-- Both options can be enabled simultaneously
+- Return code convention: `0` success, `-1` input/output row mismatch, `-3` input column mismatch with `XCount`, `-4` output column mismatch with polynomial count
 
 **Note**:
-- Multi-threading functionality is only used in data conversion mode
-- Code generation is an additional function of data conversion
+- The threading interface is only used at the data conversion entry
+- For code generation, use the standalone `CodeGeneration` mode below
+
+#### Code Generation Mode (item = "CodeGeneration")
+
+This mode converts PIP expressions directly into C or Fortran code without data matrix conversion.
+
+**How to enable this mode**:
+- Set `item = "CodeGeneration"` in the parameter file
+
+**Input files**:
+- `PIPFileName`: PIP expression file path
+
+**Output files**:
+- `<OutputFileName>.c`: Generated C code (if `CodeGenSetting.CcodePrint = true`)
+- `<OutputFileName>.f90`: Generated Fortran code (if `CodeGenSetting.FortranCodePrint = true`)
+
+**Notes**:
+- This mode does not require `DataFileName`
+- `threadCount` has no practical effect in this mode
+
+#### Polynomial Cutoff Mode (item = "cutoff")
+
+This mode filters and truncates the input PIP expression set to generate a smaller expression file.
+
+**How to enable this mode**:
+- Set `item = "cutoff"` in the parameter file
+
+**Input files**:
+- `PIPFileName`: PIP expression file path
+
+**Cutoff parameters (CutoffSetting)**:
+- `threshold`: `"order"` or `"workload"`
+- `order`: effective when `threshold` is `"order"`, meaning max kept order
+- `workload`: effective when `threshold` is `"workload"`, meaning max accumulated workload
+- In current implementation, workload is estimated cumulatively as `order × itemCount` per polynomial
+- `CrossItem`: whether to enable cross-item filtering
+- Current `CrossItem` rule checks repeated variable indices in the representative monomial; repeated indices are treated as non-`CrossItem`
+
+**Output files**:
+- `<OutputFileName>.txt`: truncated polynomial expression text (keeps original `P[i] = ...` format)
+
+**Notes**:
+- This mode does not perform data matrix conversion
+- This mode currently does not trigger code generation
+- `cutoff` rebuilds order distribution and partition information; output order may differ from input order
+
+#### Fundamental Invariant Mode (item = "SFI")
+
+This mode is currently a reserved entry and is not implemented yet.
+The `SFI` section in the parameter file is read, but current versions do not produce substantive results.
 
 #### Test Mode (item = "test")
 
@@ -255,7 +360,7 @@ This mode is only for software developers to test functions:
 ./run.sh -i ./parameter/input.txt -o ./output/
 ```
 
-Ordinary users do not need to use this mode.
+This is an internal test entry and is generally not required for end users.
 
 ### PIP Expression File Format
 

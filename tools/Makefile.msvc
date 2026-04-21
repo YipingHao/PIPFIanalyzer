@@ -1,0 +1,45 @@
+﻿CXX = cl.exe
+CXXFLAGS = /EHsc /utf-8 /c /wd4819 /wd4828 /Fo"obj\\" /Fd"obj\\" /nologo
+
+OBJS = obj\main.obj obj\test.obj obj\analyzer.obj obj\parser.obj obj\sheet.obj obj\dictionary.obj obj\automata.obj obj\printer.obj
+
+all: test\main.exe
+
+test\main.exe: $(OBJS)
+        link.exe /nologo /OUT:"test\main.exe" $(OBJS)
+
+obj\main.obj: test\main.cpp
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) test\main.cpp
+
+obj\test.obj: test\test.cpp
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) test\test.cpp
+
+obj\analyzer.obj: code\analyzer.cpp code\analyzer.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\analyzer.cpp
+
+obj\parser.obj: code\parser.cpp code\analyzer.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\parser.cpp
+
+obj\sheet.obj: code\sheet.cpp code\sheet.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\sheet.cpp
+
+obj\dictionary.obj: code\dictionary.cpp code\dictionary.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\dictionary.cpp
+
+obj\automata.obj: code\automata.cpp code\automata.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\automata.cpp
+
+obj\printer.obj: code\printer.cpp code\analyzer.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\printer.cpp
+
+clean:
+        if exist obj\*.obj del /Q obj\*.obj
+        if exist test\main.exe del /Q test\main.exe

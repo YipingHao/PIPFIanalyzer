@@ -115,7 +115,18 @@ namespace analyzer
             - partions[i][k] 表示第 i 个多项式的代表单项式（如第一个单项式）中，
               包含第 k 个一阶多项式的自变量的次数（个数）。
             */
-            vector<vector<size_t>> partions;
+            vector<vector<size_t> > partions;
+
+            vector<bool> CrossItem;
+            /*
+            什么是CrossItem（跨项）：
+            首先根据partions，如果有一个划分指标k,满足两个条件，
+            首先partions[i][k] > 1，说明第i个多项式的代表单项式中包含了第k个一阶不变量的自变量。
+            其次，它的代表单项式（第一个单项式）中属于k的自变量中有重复指标。
+            即 类似于 r[0] * r[0] * r[1] 这种单项式中，r[0] 出现了两次。
+            在做判断时可以忽略partions,直接检查代表单项式（第一个单项式）中是否有重复的自变量索引。
+            如果有这样的指标重复，那么就是false,否则就是true。
+            */
         public:
             const vector<FIexpress>& getItems() const { return items; }
             void setItems(const vector<FIexpress>& items) { this->items = items; }
@@ -125,10 +136,14 @@ namespace analyzer
             size_t getXCount() const { return XCount; }
         protected:
             void SortByOrder(void);
+            void OrderAnalysis(void);
+            void CrossItemAnalysis(void);
             void analyze(void);
         public:
             int compute(const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;
-            int compute(unsigned int threadCount, const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;
+            int compute(unsigned int threadCount, const double*input, size_t ldi, size_t rowi, size_t coli, double* output, size_t ldo, size_t rowo, size_t colo) const;    
+            void cutoffByOrder(int max_order, bool enable_crossitem);
+            void cutoffByWorkload(size_t max_workload, bool enable_crossitem);
             /*
             数据转换函数，将多元多项式的输入转为输出，并且一次转换多条数据，每条数据占据矩阵的一行的开头位置。
             数据矩阵的存储方式说明：坚定的使用行主元存储，即每个元素的索引为 row * ld + col
@@ -207,6 +222,28 @@ namespace analyzer
             最后将结果写入output数组的对应位置。
             */
             void demo(FILE*fp = stdout) const;
+
+            void print(FILE*fp) const;
+            /*
+            demo 等成员是输出多项式的有关信息在屏幕上给使用者看的。
+            print C code 和 Fortran code 则是输出代码文件的形式给使用者的。
+            生成的代码文件是用户真正用来调用的，demo只是给用户看的。
+
+            print则不生成代码，也不给用户看，而是生成和输入文件格式一致的文本，把此处储存的多项式
+            按照原格式保存到一个新文件中的接口。不输出任何额外的附加信息。
+
+            输出的格式示例如下
+
+            ```
+            P[0] = r[0] + r[1] + r[2] + r[3];
+            P[1] = r[4] + r[5] + r[6] + r[7] + r[8] + r[9];
+            P[2] = r[0] * r[1] + r[0] * r[2] + r[0] * r[3] + r[1] * r[2] + r[1] * r[3] + r[2] * r[3];
+            P[3] = r[0] * r[7] + r[0] * r[8] + r[0] * r[9] + r[1] * r[5] + r[1] * r[6] + r[1] * r[9] + r[2] * r[4] + r[2] * r[6] + r[2] * r[8] + r[3] * r[4] + r[3] * r[5] + r[3] * r[7];
+            P[4] = r[4] * r[5] + r[4] * r[6] + r[4] * r[7] + r[4] * r[8] + r[5] * r[6] + r[5] * r[7] + r[5] * r[9] + r[6] * r[8] + r[6] * r[9] + r[7] * r[8] + r[7] * r[9] + r[8] * r[9];
+            P[5] = r[4] * r[9] + r[5] * r[8] + r[6] * r[7];
+            ```
+
+            */
     };
 
     struct errorinfo

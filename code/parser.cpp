@@ -221,36 +221,59 @@ int FIexpresses::build(FILE*fp)
             return -2;
         }
     }
-    highestOrder = 0;
-    XCount = 0;
+    
     // 按照标号顺序存储多项式
     items.resize(max + 1);
     for (size_t i = 0; i < sites.count(); i++)
     {
         items[sites[i]].move(exps[i]);
+    }
+    
+    OrderAnalysis();
+    
+    // 计算按照一阶不变量划分的partions数组
+    analyze();
+
+    // 计算CrossItem数组
+    CrossItemAnalysis();
+
+    return 0;
+}
+
+void FIexpresses::OrderAnalysis(void)
+{
+    highestOrder = 0;
+    size_t newXCount = 0;
+    
+    for (size_t i = 0; i < items.count(); i++) {
         int order = items[i].getOrder();
-        int XCountNow = items[i].getXCount();
-        if(order > highestOrder)
-        {
+        size_t XCountNow = items[i].getXCount();
+        
+        if (order > highestOrder) {
             highestOrder = order;
         }
-        if(XCountNow > XCount)
-        {
-            XCount = XCountNow;
+        if (XCountNow > newXCount) {
+            newXCount = XCountNow;
         }
     }
-    XCount++;
-    // 计算最高次数和次数分布
     
-    OrderCount.clear();
-    OrderCount.resize(highestOrder + 1);
-    for (size_t i = 0; i < items.count(); i++)
-    {
-        int order = items[i].getOrder();
-        OrderCount[order]++;
+    if (items.count() > 0) {
+        XCount = newXCount + 1;
+    } else {
+        XCount = 0;
     }
     
-    return 0;
+    OrderCount.recount(highestOrder + 1);
+    for(size_t i = 0; i <= (size_t)highestOrder; i++) {
+        OrderCount[i] = 0;
+    }
+        
+    for (size_t i = 0; i < items.count(); i++) {
+        int order = items[i].getOrder();
+        if (order >= 0 && order <= highestOrder) {
+            OrderCount[order]++;
+        }
+    }
 }
 
 
