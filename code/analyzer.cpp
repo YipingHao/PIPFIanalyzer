@@ -363,7 +363,7 @@ void FIexpresses::analyze(void)
         }
         partions.append(partion);
     }
-
+  
     CrossItemAnalysis();
 }
 
