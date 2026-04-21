@@ -5,7 +5,7 @@
 //         Keys are crucial too, don't change the former keys of the input values.
 //=======================================================================================================
 {
-	PIPFileName = "../data/CH4.txt";
+	PIPFileName = "./data/CH4.txt";
     DataFileName = "./data/vain.txt";
 	OutputFileName = "L-CH4";//Prefix is only needed
 

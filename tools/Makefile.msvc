@@ -1,7 +1,7 @@
 ﻿CXX = cl.exe
 CXXFLAGS = /EHsc /utf-8 /c /wd4819 /wd4828 /Fo"obj\\" /Fd"obj\\" /nologo
 
-OBJS = obj\main.obj obj\test.obj obj\analyzer.obj obj\parser.obj obj\sheet.obj obj\dictionary.obj obj\automata.obj obj\printer.obj
+OBJS = obj\main.obj obj\test.obj obj\analyzer.obj obj\parser.obj obj\sheet.obj obj\dictionary.obj obj\automata.obj obj\printer.obj obj\analyzerthread_win.obj
 
 all: test\main.exe
 
@@ -39,6 +39,10 @@ obj\automata.obj: code\automata.cpp code\automata.h
 obj\printer.obj: code\printer.cpp code\analyzer.h
         if not exist obj mkdir obj
         $(CXX) $(CXXFLAGS) code\printer.cpp
+
+obj\analyzerthread_win.obj: code\analyzerthread_win.cpp code\analyzer.h
+        if not exist obj mkdir obj
+        $(CXX) $(CXXFLAGS) code\analyzerthread_win.cpp
 
 clean:
         if exist obj\*.obj del /Q obj\*.obj
