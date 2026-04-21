@@ -390,7 +390,7 @@ threadCount = 32;  // Use 32 threads (only used in data conversion mode)
 
 ### Usage Examples
 
-**Data Conversion (with code generation)**
+**Data Conversion**
 
 1. Prepare PIP expression file `my_pip.txt` and bond length coordinate-energy data point file
 2. Create parameter file `my_input.txt`:
@@ -400,9 +400,7 @@ threadCount = 32;  // Use 32 threads (only used in data conversion mode)
        DataFileName = "./data/O4.txt";
        OutputFileName = "my_output";
        threadCount = 16;  // Use 16 threads for data conversion
-       item = "dataswitch";  // Use main function mode
-       CcodePrint = true;  // Also generate C code
-       FortranCodePrint = false;  // Do not generate Fortran code
+       item = "dataswitch";  // Data conversion mode
    }
    ```
 3. Run the program:
@@ -411,7 +409,29 @@ threadCount = 32;  // Use 32 threads (only used in data conversion mode)
    ```
 4. Output files:
    - `./my_output/my_output.txt`: Converted data file
-   - `./my_output/my_output.c`: Generated C language code
+
+**Code Generation (standalone mode)**
+
+1. Prepare a PIP expression file `my_pip.txt`
+2. Create parameter file `my_codegen.txt`:
+  ```json
+  {
+     PIPFileName = "./data/my_pip.txt";
+     OutputFileName = "my_codegen";
+     item = "CodeGeneration";
+     CodeGenSetting = {
+        CcodePrint = true;
+        FortranCodePrint = true;
+     };
+  }
+  ```
+3. Run the program:
+  ```bash
+  ./run.sh -I my_codegen.txt -o ./my_output/
+  ```
+4. Output files:
+  - `./my_output/my_codegen.c`: Generated C language code
+  - `./my_output/my_codegen.f90`: Generated Fortran language code
 
 ### Debug Mode
 
@@ -431,8 +451,13 @@ You can also specify input and output files here:
 
 - **Data conversion mode**:
   - `<OutputFileName>.txt`: Converted data file
-  - `<OutputFileName>.c`: Generated C language code (if `CcodePrint = true`)
-  - `<OutputFileName>.f`: Generated Fortran language code (if `FortranCodePrint = true`)
+
+- **Code generation mode**:
+  - `<OutputFileName>.c`: Generated C language code (if `CodeGenSetting.CcodePrint = true`)
+  - `<OutputFileName>.f90`: Generated Fortran language code (if `CodeGenSetting.FortranCodePrint = true`)
+
+- **Polynomial cutoff mode**:
+  - `<OutputFileName>.txt`: Truncated PIP expression text
 
 - **Test mode**:
   - Test output files (only for developers)
@@ -443,7 +468,7 @@ You can also specify input and output files here:
 2. String values need to be enclosed in double quotes
 3. Ensure the input file path is correct
 4. The output directory will be automatically created if it does not exist
-5. When using multi-threaded computing, the number of threads should be set reasonably based on the number of CPU cores
+5. In current versions, `threadCount` is mainly for interface compatibility and future parallel backend extension, and does not directly represent actual parallel thread count
 
 ## Software Architecture
 
@@ -497,6 +522,9 @@ This is the core module of the software, responsible for the representation and 
   - Provides `compute()` method for batch data conversion
   - Provides `build()` method to build polynomial expressions from files
   - Provides `printCcode()` and `printFortrancode()` methods to generate code
+  - Provides `cutoffByOrder()` and `cutoffByWorkload()` methods for feature truncation
+  - Provides `print()` method to export original PIP text format
+  - Provides `CrossItem` analysis and first-order partition information rebuild
 
 **Data Structure**:
 ```
@@ -541,9 +569,11 @@ Responsible for converting polynomial expressions into executable C or Fortran c
 Provides multi-threaded data conversion functionality to improve the efficiency of large-scale data processing.
 
 **Main Functions**:
-- Supports multi-threaded parallel computing
-- Automatically distributes tasks to each thread
-- Uses pthread library to implement thread management
+- Preserves the multi-thread compute interface and task partitioning logic
+- In default build paths, thread parameters are used as a compatibility entry
+- The current compute path prioritizes deterministic behavior and can fall back to single-thread compute
+
+The strategy below describes allocation when a parallel backend is enabled.
 
 **Thread Allocation Strategy**:
 ```
@@ -638,7 +668,7 @@ Build polynomial objects (FIexpresses)
 │                                       │
 Main function: Data conversion (multi-threaded)        Additional function: Code generation
 │                                       │
-Converted data file (.txt)           C/Fortran code files (.c/.f)
+Converted data file (.txt)           C/Fortran code files (.c/.f90)
 ```
 
 ### Thread Model
