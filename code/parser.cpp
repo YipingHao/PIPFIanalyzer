@@ -1,6 +1,8 @@
 #include "analyzer.h"
 #include "sheet.h"
 #include "automata.h"
+#include <cstring>
+#include <climits>
 
 
 typedef hyperlex::Morpheme tokenstream;
@@ -165,6 +167,7 @@ int build_raw(FILE*fp, vector<FIexpress> &exps, vector<size_t> &sites)
                     error = buildSingleExpress(site, exp, TS, GT);
                     if(error != 0)
                     {
+                        delete ASTree;
                         return error;
                     }
                     exps.append(exp);
@@ -177,10 +180,11 @@ int build_raw(FILE*fp, vector<FIexpress> &exps, vector<size_t> &sites)
     
         iterator.next();
     }
+    delete ASTree;
     return 0;
 }
 
-int FIexpresses::build(FILE*fp)
+int FIexpresses::build(FILE*fp, bool runAnalysis)
 {
     vector<FIexpress> exps;
     vector<size_t> sites;
@@ -231,12 +235,175 @@ int FIexpresses::build(FILE*fp)
     
     OrderAnalysis();
     
-    // 计算按照一阶不变量划分的partions数组
-    analyze();
+    if (runAnalysis)
+    {
+        // cutoff/inspection paths need partition and CrossItem metadata.
+        analyze();
+    }
+    else
+    {
+        Order1Count = (OrderCount.size() > 1) ? OrderCount[1] : 0;
+        partions.clear();
+        CrossItem.clear();
+    }
 
-    // 计算CrossItem数组
-    CrossItemAnalysis();
+    return 0;
+}
 
+class BinaryReader
+{
+    FILE* fp;
+    unsigned char buffer[65536];
+    size_t offset;
+    size_t available;
+    bool valid;
+
+    bool readByte(unsigned char& value)
+    {
+        if (offset == available)
+        {
+            available = std::fread(buffer, 1, sizeof(buffer), fp);
+            offset = 0;
+            if (available == 0)
+            {
+                if (std::ferror(fp)) valid = false;
+                return false;
+            }
+        }
+        value = buffer[offset++];
+        return true;
+    }
+
+public:
+    explicit BinaryReader(FILE* input)
+        : fp(input), offset(0), available(0), valid(input != NULL) {}
+
+    bool readBytes(unsigned char* data, size_t count)
+    {
+        for (size_t i = 0; i < count; ++i)
+            if (!readByte(data[i])) return false;
+        return true;
+    }
+
+    bool readU32(unsigned long& value)
+    {
+        value = 0;
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+            unsigned char byte;
+            if (!readByte(byte)) return false;
+            value |= ((unsigned long)byte) << (8 * i);
+        }
+        return true;
+    }
+
+    bool readU64(unsigned long long& value)
+    {
+        value = 0;
+        for (unsigned int i = 0; i < 8; ++i)
+        {
+            unsigned char byte;
+            if (!readByte(byte)) return false;
+            value |= ((unsigned long long)byte) << (8 * i);
+        }
+        return true;
+    }
+
+    bool hasTrailingData()
+    {
+        if (offset < available) return true;
+        available = std::fread(buffer, 1, sizeof(buffer), fp);
+        offset = 0;
+        if (available != 0) return true;
+        if (std::ferror(fp)) valid = false;
+        return false;
+    }
+
+    bool good() const { return valid; }
+};
+
+int FIexpresses::buildBinary(FILE* fp, bool runAnalysis)
+{
+    if (fp == NULL || sizeof(unsigned int) != 4 || sizeof(unsigned long long) < 8) return -20;
+
+    BinaryReader reader(fp);
+    unsigned char magic[8];
+    if (!reader.readBytes(magic, sizeof(magic))) return -21;
+    const unsigned char expectedMagic[8] = {'P', 'I', 'P', 'B', 'I', 'N', '1', 0};
+    if (std::memcmp(magic, expectedMagic, sizeof(magic)) != 0) return -22;
+
+    unsigned long version, headerSize, endianMarker, indexWidth, contentKind, flags;
+    unsigned long maxOrder, reserved;
+    unsigned long long featureCount, polynomialCount, factorIndexCount;
+    if (!reader.readU32(version) || !reader.readU32(headerSize) ||
+        !reader.readU32(endianMarker) || !reader.readU32(indexWidth) ||
+        !reader.readU32(contentKind) || !reader.readU32(flags) ||
+        !reader.readU64(featureCount) || !reader.readU64(polynomialCount) ||
+        !reader.readU64(factorIndexCount) || !reader.readU32(maxOrder) ||
+        !reader.readU32(reserved)) return -21;
+
+    if (version != 1 || headerSize != 64 || endianMarker != 0x01020304UL ||
+        indexWidth != 4 || contentKind < 1 || contentKind > 3 ||
+        (flags & 3UL) != 3UL || reserved != 0) return -23;
+    if (featureCount > (unsigned long long)(size_t)-1 ||
+        polynomialCount > (unsigned long long)(size_t)-1 ||
+        factorIndexCount > (unsigned long long)(size_t)-1) return -24;
+
+    items.clear();
+    items.resize((size_t)polynomialCount);
+    unsigned long long factorsRead = 0;
+    unsigned long actualMaxOrder = 0;
+
+    for (size_t p = 0; p < (size_t)polynomialCount; ++p)
+    {
+        unsigned long order, recordReserved;
+        unsigned long long monomialCount;
+        if (!reader.readU32(order) || !reader.readU32(recordReserved) ||
+            !reader.readU64(monomialCount)) return -21;
+        if (order == 0 || order > (unsigned long)INT_MAX ||
+            recordReserved != 0 || order > maxOrder) return -25;
+        if (monomialCount > (unsigned long long)(size_t)-1) return -24;
+        if (monomialCount != 0 &&
+            (unsigned long long)order > (~0ULL / monomialCount)) return -24;
+
+        const unsigned long long recordFactors = monomialCount * (unsigned long long)order;
+        if (factorsRead > factorIndexCount ||
+            recordFactors > factorIndexCount - factorsRead ||
+            recordFactors > (unsigned long long)(size_t)-1) return -26;
+
+        vector<size_t> indices;
+        indices.resize((size_t)recordFactors);
+        for (size_t i = 0; i < (size_t)recordFactors; ++i)
+        {
+            unsigned long index;
+            if (!reader.readU32(index)) return -21;
+            if ((unsigned long long)index >= featureCount) return -27;
+            indices[i] = (size_t)index;
+        }
+
+        items[p].order = (int)order;
+        items[p].ItemCount = (size_t)monomialCount;
+        items[p].items.move(indices);
+        factorsRead += recordFactors;
+        if (order > actualMaxOrder) actualMaxOrder = order;
+    }
+
+    if (factorsRead != factorIndexCount || actualMaxOrder > maxOrder) return -26;
+    if (reader.hasTrailingData()) return -28;
+    if (!reader.good()) return -21;
+
+    OrderAnalysis();
+    XCount = (size_t)featureCount;
+    if (runAnalysis)
+    {
+        analyze();
+    }
+    else
+    {
+        Order1Count = (OrderCount.size() > 1) ? OrderCount[1] : 0;
+        partions.clear();
+        CrossItem.clear();
+    }
     return 0;
 }
 
@@ -395,4 +562,3 @@ int ParserDataMatrix(FILE*inputMat,vector<double> & matrix, size_t &row, size_t 
 }
 
 }
-

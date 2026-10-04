@@ -2,11 +2,80 @@
 #include "../code/analyzer.h"
 #include <cstring>
 #include <string>
+#include <climits>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 int TestEntrance(hyperlex::dictionary&dict, const char* outputPath);
 
 int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath, const char* task);
 std::string static ChangeSuffix(const std::string& file, const char* new_one);
+int static Benchmark(hyperlex::dictionary& dict, const char* outputPath,
+                     analyzer::FIexpresses& expressions,
+                     double formulaLoadSeconds, const char* formulaFormat);
+
+static double wallSeconds()
+{
+#ifdef _WIN32
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER counter;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&counter);
+    return (double)counter.QuadPart / (double)frequency.QuadPart;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+#endif
+}
+
+static long long peakRssKiB()
+{
+#ifdef _WIN32
+    return -1;
+#else
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) != 0) return -1;
+#ifdef __APPLE__
+    return (long long)(usage.ru_maxrss / 1024);
+#else
+    return (long long)usage.ru_maxrss;
+#endif
+#endif
+}
+
+static bool endsWith(const std::string& value, const char* suffix)
+{
+    const size_t suffixLength = std::strlen(suffix);
+    return value.size() >= suffixLength &&
+           value.compare(value.size() - suffixLength, suffixLength, suffix) == 0;
+}
+
+static void printJsonString(FILE* fp, const char* value)
+{
+    std::fputc('"', fp);
+    if (value != NULL)
+    {
+        for (const unsigned char* p = (const unsigned char*)value; *p; ++p)
+        {
+            if (*p == '"' || *p == '\\')
+            {
+                std::fputc('\\', fp);
+                std::fputc(*p, fp);
+            }
+            else if (*p == '\n') std::fputs("\\n", fp);
+            else if (*p == '\r') std::fputs("\\r", fp);
+            else if (*p == '\t') std::fputs("\\t", fp);
+            else if (*p >= 0x20) std::fputc(*p, fp);
+        }
+    }
+    std::fputc('"', fp);
+}
 
 int main(int argc, char* argv[])
 {
@@ -102,15 +171,34 @@ int static SFI(hyperlex::dictionary&dict, const char* outputPath, analyzer::FIex
 int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath, const char* task)
 {
     const char * PIPFileName = dict.search("./data/origin.txt","PIPFileName");
+    const char * PIPFileFormat = dict.search("Auto", "PIPFileFormat");
+    const bool benchmarkMode = strcmp(task, "benchmark") == 0;
+    bool binaryFormat = false;
+    if (strcmp(PIPFileFormat, "Binary") == 0)
+        binaryFormat = true;
+    else if (strcmp(PIPFileFormat, "Text") == 0)
+        binaryFormat = false;
+    else if (strcmp(PIPFileFormat, "Auto") == 0)
+        binaryFormat = endsWith(PIPFileName, ".pipbin");
+    else
+    {
+        printf("Error: PIPFileFormat must be Auto, Text, or Binary.\n");
+        return -30;
+    }
+
     printf("PIPFileName: %s\n", PIPFileName);
-    FILE*fp = fopen(PIPFileName, "r");
+    printf("PIPFileFormat: %s\n", binaryFormat ? "Binary" : "Text");
+    const double formulaLoadStart = wallSeconds();
+    FILE*fp = fopen(PIPFileName, binaryFormat ? "rb" : "r");
     if (fp == NULL) {
         printf("Error when opening PIP file: %s\n", PIPFileName);
         return 1123;
     }
     analyzer::FIexpresses expressions;
-    int error = expressions.build(fp);
+    int error = binaryFormat ? expressions.buildBinary(fp, !benchmarkMode)
+                             : expressions.build(fp, !benchmarkMode);
     fclose(fp);
+    const double formulaLoadSeconds = wallSeconds() - formulaLoadStart;
     if (error != 0) {
         printf("Error when reading PIP file: %s, error: %d\n", PIPFileName, error);
         return error;
@@ -119,7 +207,8 @@ int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath, const
         printf("read PIP file end:\n");
     }
 
-    expressions.demo(stdout);
+    if (!benchmarkMode)
+        expressions.demo(stdout);
 
     if (strcmp(task, "dataswitch") == 0) 
     {
@@ -137,6 +226,11 @@ int static TaskEntrance(hyperlex::dictionary&dict, const char* outputPath, const
     else if (strcmp(task, "SFI") == 0) 
     {
         return SFI(dict, outputPath, expressions);
+    }
+    else if (benchmarkMode)
+    {
+        return Benchmark(dict, outputPath, expressions, formulaLoadSeconds,
+                         binaryFormat ? "Binary" : "Text");
     }
     else
     {
@@ -264,6 +358,175 @@ int static DataMatrixSwitch(hyperlex::dictionary&dict, const char* outputPath, a
         return 1234;
     }
 
+    return 0;
+}
+
+int static Benchmark(hyperlex::dictionary& dict, const char* outputPath,
+                     analyzer::FIexpresses& expressions,
+                     double formulaLoadSeconds, const char* formulaFormat)
+{
+    const long int threadCountValue = dict.search((long int)1, "threadCount");
+    const long int batchSizeValue = dict.search((long int)32, "BenchmarkSetting.batchSize");
+    const long int warmupCountValue = dict.search((long int)3, "BenchmarkSetting.warmupCount");
+    const long int repeatCountValue = dict.search((long int)10, "BenchmarkSetting.repeatCount");
+    if (threadCountValue < 1 || (unsigned long)threadCountValue > (unsigned long)UINT_MAX ||
+        batchSizeValue < 1 || warmupCountValue < 0 || repeatCountValue < 1 ||
+        (unsigned long long)batchSizeValue > (unsigned long long)(size_t)-1 ||
+        (unsigned long long)warmupCountValue > (unsigned long long)(size_t)-1 ||
+        (unsigned long long)repeatCountValue > (unsigned long long)(size_t)-1)
+    {
+        printf("Error: benchmark settings require threadCount>=1, batchSize>=1, warmupCount>=0, repeatCount>=1.\n");
+        return -40;
+    }
+
+    const size_t batchSize = (size_t)batchSizeValue;
+    const size_t warmupCount = (size_t)warmupCountValue;
+    const size_t repeatCount = (size_t)repeatCountValue;
+    const unsigned int threadCount = (unsigned int)threadCountValue;
+    const char* dataFileName = dict.search("./data/origin.txt", "DataFileName");
+
+    const double dataLoadStart = wallSeconds();
+    FILE* inputMat = fopen(dataFileName, "r");
+    if (inputMat == NULL)
+    {
+        printf("Error when opening data file: %s\n", dataFileName);
+        return 1234234;
+    }
+
+    size_t row = 0, col = 0;
+    analyzer::vector<double> matrix;
+    int error = analyzer::ParserDataMatrix(inputMat, matrix, row, col);
+    fclose(inputMat);
+    const double dataLoadSeconds = wallSeconds() - dataLoadStart;
+    if (error != 0)
+    {
+        printf("Error when parsing data file: %s, error: %d\n", dataFileName, error);
+        return error;
+    }
+    if (row < batchSize)
+    {
+        printf("Error: data file has %zu rows but benchmark batchSize is %zu.\n", row, batchSize);
+        return -41;
+    }
+
+    const size_t xCount = expressions.getXCount();
+    bool hasEnergy = false;
+    if (col == xCount + 1) hasEnergy = true;
+    else if (col != xCount)
+    {
+        printf("Error: input column count %zu does not match feature count %zu.\n", col, xCount);
+        return -42;
+    }
+
+    const size_t outputCols = expressions.getItems().size();
+    if (outputCols != 0 && batchSize > ((size_t)-1) / outputCols)
+    {
+        printf("Error: benchmark output matrix size overflows size_t.\n");
+        return -43;
+    }
+
+    analyzer::vector<double> outputMatrix;
+    outputMatrix.resize(batchSize * outputCols);
+    const size_t inputCols = hasEnergy ? col - 1 : col;
+
+    const double warmupStart = wallSeconds();
+    for (size_t i = 0; i < warmupCount; ++i)
+    {
+        if (threadCount > 1)
+            error = expressions.compute(threadCount, matrix.ptr(), col, batchSize, inputCols,
+                                        outputMatrix.ptr(), outputCols, batchSize, outputCols);
+        else
+            error = expressions.compute(matrix.ptr(), col, batchSize, inputCols,
+                                        outputMatrix.ptr(), outputCols, batchSize, outputCols);
+        if (error != 0)
+        {
+            printf("Error during benchmark warm-up: %d\n", error);
+            return error;
+        }
+    }
+    const double warmupSeconds = wallSeconds() - warmupStart;
+
+    const double evaluationStart = wallSeconds();
+    for (size_t i = 0; i < repeatCount; ++i)
+    {
+        if (threadCount > 1)
+            error = expressions.compute(threadCount, matrix.ptr(), col, batchSize, inputCols,
+                                        outputMatrix.ptr(), outputCols, batchSize, outputCols);
+        else
+            error = expressions.compute(matrix.ptr(), col, batchSize, inputCols,
+                                        outputMatrix.ptr(), outputCols, batchSize, outputCols);
+        if (error != 0)
+        {
+            printf("Error during timed benchmark evaluation: %d\n", error);
+            return error;
+        }
+    }
+    const double evaluationSeconds = wallSeconds() - evaluationStart;
+
+    long double checksum = 0.0L;
+    for (size_t i = 0; i < outputMatrix.size(); ++i)
+        checksum += (long double)outputMatrix[i];
+
+    unsigned long long factorIndexCount = 0;
+    const analyzer::vector<analyzer::FIexpress>& polys = expressions.getItems();
+    for (size_t i = 0; i < polys.size(); ++i)
+        factorIndexCount += (unsigned long long)polys[i].getOrder() *
+                            (unsigned long long)polys[i].getItemCount();
+
+    const double meanRepeatSeconds = evaluationSeconds / (double)repeatCount;
+    const double secondsPerPoint = meanRepeatSeconds / (double)batchSize;
+    const double pointsPerSecond = secondsPerPoint > 0.0 ? 1.0 / secondsPerPoint : 0.0;
+    const long long peakRss = peakRssKiB();
+
+    const char* outputFileName = dict.search("output", "OutputFileName");
+    std::string reportName = ChangeSuffix(outputFileName, ".benchmark.json");
+    hyperlex::FilePath reportLeaf;
+    hyperlex::FilePath reportPath;
+    reportPath.build(outputPath);
+    reportLeaf.build(reportName.c_str());
+    reportPath += reportLeaf;
+
+    FILE* report = fopen(reportPath.path(), "w");
+    if (report == NULL)
+    {
+        printf("Error opening benchmark report: %s\n", reportPath.path());
+        return -44;
+    }
+
+    fprintf(report, "{\n");
+    fprintf(report, "  \"schema_version\": 1,\n");
+    fprintf(report, "  \"formula_file\": "); printJsonString(report, dict.search("", "PIPFileName")); fprintf(report, ",\n");
+    fprintf(report, "  \"formula_format\": "); printJsonString(report, formulaFormat); fprintf(report, ",\n");
+    fprintf(report, "  \"data_file\": "); printJsonString(report, dataFileName); fprintf(report, ",\n");
+    fprintf(report, "  \"feature_count\": %zu,\n", xCount);
+    fprintf(report, "  \"polynomial_count\": %zu,\n", outputCols);
+    fprintf(report, "  \"factor_index_count\": %llu,\n", factorIndexCount);
+    fprintf(report, "  \"batch_size\": %zu,\n", batchSize);
+    fprintf(report, "  \"thread_count\": %u,\n", threadCount);
+    fprintf(report, "  \"warmup_count\": %zu,\n", warmupCount);
+    fprintf(report, "  \"repeat_count\": %zu,\n", repeatCount);
+    fprintf(report, "  \"formula_load_seconds\": %.9f,\n", formulaLoadSeconds);
+    fprintf(report, "  \"data_load_seconds\": %.9f,\n", dataLoadSeconds);
+    fprintf(report, "  \"warmup_seconds\": %.9f,\n", warmupSeconds);
+    fprintf(report, "  \"evaluation_seconds\": %.9f,\n", evaluationSeconds);
+    fprintf(report, "  \"mean_repeat_seconds\": %.9f,\n", meanRepeatSeconds);
+    fprintf(report, "  \"seconds_per_point\": %.12f,\n", secondsPerPoint);
+    fprintf(report, "  \"points_per_second\": %.9f,\n", pointsPerSecond);
+    fprintf(report, "  \"peak_rss_kib\": %lld,\n", peakRss);
+    fprintf(report, "  \"checksum\": %.17Lg\n", checksum);
+    fprintf(report, "}\n");
+    fclose(report);
+
+    printf("Benchmark report generated: %s\n", reportPath.path());
+    printf("METRIC formula_load_seconds=%.9f\n", formulaLoadSeconds);
+    printf("METRIC data_load_seconds=%.9f\n", dataLoadSeconds);
+    printf("METRIC warmup_seconds=%.9f\n", warmupSeconds);
+    printf("METRIC evaluation_seconds=%.9f\n", evaluationSeconds);
+    printf("METRIC mean_repeat_seconds=%.9f\n", meanRepeatSeconds);
+    printf("METRIC seconds_per_point=%.12f\n", secondsPerPoint);
+    printf("METRIC points_per_second=%.9f\n", pointsPerSecond);
+    printf("METRIC peak_rss_kib=%lld\n", peakRss);
+    printf("METRIC checksum=%.17Lg\n", checksum);
     return 0;
 }
 

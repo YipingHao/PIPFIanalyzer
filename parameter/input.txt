@@ -6,6 +6,7 @@
 //=======================================================================================================
 {
 	PIPFileName = "./data/CH4.txt";
+	PIPFileFormat = "Auto"; // Auto (.pipbin by suffix), Text, or Binary
     DataFileName = "./data/vain.txt";
 	OutputFileName = "L-CH4";//Prefix is only needed
 
@@ -16,6 +17,14 @@
 	//item = "CodeGeneration";
 	item = "cutoff";
 	//item = "SFI";
+	//item = "benchmark";
+
+	BenchmarkSetting =
+	{
+		batchSize = 32;
+		warmupCount = 3;
+		repeatCount = 10;
+	};
 
 	CodeGenSetting =
 	{

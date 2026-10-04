@@ -83,7 +83,7 @@ namespace analyzer
     {
         public:
         typedef void _hx_need_explicit_move_tag;
-            FIexpresses() : highestOrder(0), XCount(0) {}
+            FIexpresses() : highestOrder(0), XCount(0), Order1Count(0) {}
             ~FIexpresses() {}
             FIexpresses(const FIexpresses& other) : items(other.items), highestOrder(other.highestOrder), OrderCount(other.OrderCount), XCount(other.XCount) {}
             FIexpresses& operator=(const FIexpresses& other)
@@ -172,7 +172,8 @@ namespace analyzer
             返回值：
             - 处理的成功状态或错误码（如果有）
             */
-            int build(FILE*fp);
+            int build(FILE*fp, bool runAnalysis = true);
+            int buildBinary(FILE*fp, bool runAnalysis = true);
             /*
             从文件中读取FIexpress对象的表达式，构建FIexpresses对象。
             参数说明：
@@ -255,4 +256,4 @@ namespace analyzer
     };
     
     int ParserDataMatrix(FILE*inputMat, vector<double> & matrix, size_t &row, size_t &col);
-} 
+}

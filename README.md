@@ -174,7 +174,7 @@ make test.exe
 
 ## 使用说明
 
-本软件支持以下运行模式：`dataswitch`、`CodeGeneration`、`cutoff`、`SFI`、`test`。
+本软件支持以下运行模式：`dataswitch`、`benchmark`、`CodeGeneration`、`cutoff`、`SFI`、`test`。
 
 ### 基本运行方式
 
@@ -199,11 +199,19 @@ make test.exe
 ```json
 {
   PIPFileName = "./data/CH4.txt";          // PIP表达式文件路径
+  PIPFileFormat = "Auto";                  // Auto / Text / Binary
   DataFileName = "./data/vain.txt";        // 数据文件路径（仅dataswitch需要）
   OutputFileName = "L-CH4";                // 输出文件前缀（会自动添加.txt/.c/.f90后缀）
   threadCount = 32;                         // 线程参数（仅dataswitch入口使用）
 
-  item = "cutoff";                         // 运行模式：test/dataswitch/CodeGeneration/cutoff/SFI
+  item = "cutoff";                         // 运行模式：test/dataswitch/benchmark/CodeGeneration/cutoff/SFI
+
+  BenchmarkSetting =
+  {
+    batchSize = 32;
+    warmupCount = 3;
+    repeatCount = 10;
+  };
 
   CodeGenSetting =
   {
@@ -307,8 +315,49 @@ make test.exe
 - 返回码约定：`0`成功，`-1`输入输出行数不匹配，`-3`输入列数与`XCount`不一致，`-4`输出列数与多项式数量不一致
 
 **注意**：
-- 多线程接口仅在数据转换模式入口使用
+- 多线程接口在数据转换和 benchmark 模式入口使用
 - 代码生成功能请使用下方 `CodeGeneration` 独立模式
+
+#### 求值基准模式（item = "benchmark"）
+
+该模式用于测量传统展开公式的加载和纯求值性能。它不会生成巨型数值结果文本，并且在加载公式时跳过
+仅供截断/检查使用的 `analyze()`、partition、CrossItem 和 `demo()`。
+
+```text
+PIPFileName = "ethanol_pip.pipbin";
+PIPFileFormat = "Binary";
+DataFileName = "ethanol_points.txt";
+OutputFileName = "ethanol_pip";
+threadCount = 1;
+item = "benchmark";
+BenchmarkSetting = {
+    batchSize = 32;
+    warmupCount = 3;
+    repeatCount = 10;
+};
+```
+
+- `batchSize`：每次 `compute` 使用的数据行数；数据文件至少要有这么多行。
+- `warmupCount`：计时前的完整求值次数。
+- `repeatCount`：纯求值计时区间内的重复次数。
+- `threadCount`：仍控制求值线程数；本模式不设置 CPU 亲和性。
+- 输出 `<OutputFileName>.benchmark.json`，记录公式加载、数据加载、warm-up、纯求值、每点时间、吞吐、
+  checksum 与进程峰值 RSS。
+
+纯求值计时只包围 `FIexpresses::compute` 的重复调用；分配输出矩阵和最终 checksum 不在该区间内。
+输出矩阵仍需占用 `batchSize × polynomial_count × sizeof(double)` 字节。
+
+### 公式输入格式选择
+
+`PIPFileFormat` 可取：
+
+- `Text`：读取 `P[i] = ...;` 文本并使用词法/LR 解析器；
+- `Binary`：直接读取 FIgenerator 的 PIPBIN v1 文件；
+- `Auto`：扩展名为 `.pipbin` 时选 Binary，否则选 Text。
+
+PIPBIN v1 是固定小端、带版本和完整计数检查的格式，完整协议见
+[`docs/PIPBinaryFormat.md`](docs/PIPBinaryFormat.md)。FIgenerator 仓库也保留同一协议文档；修改协议时
+必须同步两份文档和两端实现。二进制读取不构造文本 token 或 AST。
 
 #### 代码生成模式（item = "CodeGeneration"）
 

@@ -169,7 +169,7 @@ make test.exe
 
 ## Usage Instructions
 
-This software supports the following running modes: `dataswitch`, `CodeGeneration`, `cutoff`, `SFI`, and `test`.
+This software supports the following running modes: `dataswitch`, `benchmark`, `CodeGeneration`, `cutoff`, `SFI`, and `test`.
 
 ### Basic Running Method
 
@@ -194,11 +194,19 @@ The parameter file uses a JSON-like format, with the main configuration items as
 ```json
 {
   PIPFileName = "./data/CH4.txt";          // PIP expression file path
+  PIPFileFormat = "Auto";                  // Auto / Text / Binary
   DataFileName = "./data/vain.txt";        // Data file path (required only for dataswitch)
   OutputFileName = "L-CH4";                // Output prefix (auto appends .txt/.c/.f90)
   threadCount = 32;                         // Thread parameter (used at dataswitch entry)
 
-  item = "cutoff";                         // Modes: test/dataswitch/CodeGeneration/cutoff/SFI
+  item = "cutoff";                         // Modes: test/dataswitch/benchmark/CodeGeneration/cutoff/SFI
+
+  BenchmarkSetting =
+  {
+    batchSize = 32;
+    warmupCount = 3;
+    repeatCount = 10;
+  };
 
   CodeGenSetting =
   {
@@ -300,8 +308,52 @@ This is the core mode of the software, used to convert bond length coordinate-en
 - Return code convention: `0` success, `-1` input/output row mismatch, `-3` input column mismatch with `XCount`, `-4` output column mismatch with polynomial count
 
 **Note**:
-- The threading interface is only used at the data conversion entry
+- The threading interface is used by the data conversion and benchmark entries
 - For code generation, use the standalone `CodeGeneration` mode below
+
+#### Evaluation Benchmark Mode (item = "benchmark")
+
+This mode measures loading and pure evaluation of legacy expanded formulas. It does not
+write the potentially huge value matrix. Formula loading skips `analyze()`, partition,
+CrossItem, and `demo()`, which are only needed by inspection and cutoff paths.
+
+```text
+PIPFileName = "ethanol_pip.pipbin";
+PIPFileFormat = "Binary";
+DataFileName = "ethanol_points.txt";
+OutputFileName = "ethanol_pip";
+threadCount = 1;
+item = "benchmark";
+BenchmarkSetting = {
+    batchSize = 32;
+    warmupCount = 3;
+    repeatCount = 10;
+};
+```
+
+- `batchSize`: number of data rows passed to each `compute` call.
+- `warmupCount`: full evaluations performed before timing.
+- `repeatCount`: evaluations in the timed region.
+- `threadCount`: evaluation thread count; this mode does not set CPU affinity.
+- `<OutputFileName>.benchmark.json` records formula loading, data loading, warm-up,
+  pure evaluation, per-point time, throughput, checksum, and process peak RSS.
+
+The pure evaluation interval only covers repeated `FIexpresses::compute` calls. Output
+allocation and the final checksum are outside that interval. The output matrix still uses
+`batchSize × polynomial_count × sizeof(double)` bytes.
+
+### Formula Input Format Selection
+
+`PIPFileFormat` accepts:
+
+- `Text`: parse `P[i] = ...;` through the lexer and LR parser;
+- `Binary`: load an FIgenerator PIPBIN v1 file directly;
+- `Auto`: use Binary for `.pipbin`, otherwise Text.
+
+PIPBIN v1 is a versioned little-endian format with full count validation. See
+[`docs/PIPBinaryFormat.en.md`](docs/PIPBinaryFormat.en.md) for the full protocol.
+FIgenerator keeps the same protocol document; protocol changes must update both copies and
+both implementations. Binary loading does not construct text tokens or an AST.
 
 #### Code Generation Mode (item = "CodeGeneration")
 
